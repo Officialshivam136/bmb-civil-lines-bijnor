@@ -1,20 +1,49 @@
 import Link from 'next/link';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { Package, ShoppingCart, LayoutDashboard, Settings, LogOut, PlusCircle, QrCode, Users } from 'lucide-react';
+import { Package, ShoppingCart, LayoutDashboard, Settings, PlusCircle, QrCode, Users } from 'lucide-react';
 import BMBLogo from '@/components/common/BMBLogo';
+import AdminSignOutButton from '@/components/admin/AdminSignOutButton';
+
+export const dynamic = 'force-dynamic';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const headerList = await headers();
+  const currentPath = headerList.get('x-admin-pathname') || '';
+  const isLoginPage = currentPath === '/admin/login';
+
   const cookieStore = await cookies();
   const authCookie = cookieStore.get('bmb_admin_auth');
+  const isAuthenticated = Boolean(authCookie?.value && authCookie.value.trim().length > 0);
 
-  // Verify Admin Authentication
-  let admin = null;
-  if (authCookie?.value) {
-    admin = await prisma.adminUser.findUnique({
-      where: { id: authCookie.value }
-    });
+  // If on /admin/login, render clean auth screen without admin sidebar
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
+
+  // Hard server-side protection: redirect unauthenticated users to /admin/login
+  if (!isAuthenticated) {
+    redirect('/admin/login');
+  }
+
+  // Fetch admin profile
+  let adminName = 'BMB Store Manager';
+  let adminEmail = 'admin@bmb.com';
+
+  try {
+    if (authCookie?.value && !authCookie.value.startsWith('admin_bmb_')) {
+      const admin = await prisma.adminUser.findUnique({
+        where: { id: authCookie.value },
+        select: { name: true, email: true }
+      });
+      if (admin) {
+        adminName = admin.name;
+        adminEmail = admin.email;
+      }
+    }
+  } catch (err) {
+    console.warn('[AdminLayout] Admin lookup fallback:', err);
   }
 
   return (
@@ -77,32 +106,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <PlusCircle className="w-4 h-4" />
             <span>+ Add New Item</span>
           </Link>
-
-          <Link 
-            href="/admin/settings" 
-            className="flex items-center gap-3 px-3.5 py-3 rounded-xl hover:bg-primary/5 text-foreground/80 hover:text-primary transition-colors"
-          >
-            <Settings className="w-4 h-4" />
-            <span>Shop Settings</span>
-          </Link>
         </nav>
 
         {/* Admin Footer Status */}
         <div className="p-4 border-t border-border">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold text-foreground">{admin?.name || 'Authorized Admin'}</p>
-              <p className="text-[10px] text-foreground/50">{admin?.email ? admin.email : 'BMB Civil Lines'}</p>
+            <div className="overflow-hidden mr-2">
+              <p className="text-xs font-bold text-foreground truncate">{adminName}</p>
+              <p className="text-[10px] text-foreground/50 truncate">{adminEmail}</p>
             </div>
-            <form action="/api/admin/auth" method="DELETE">
-              <a
-                href="/admin/login"
-                className="p-2 text-foreground/40 hover:text-red-600 transition-colors"
-                title="Switch / Sign out"
-              >
-                <LogOut className="w-4 h-4" />
-              </a>
-            </form>
+            <AdminSignOutButton />
           </div>
         </div>
       </aside>
@@ -116,9 +129,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </span>
           </div>
           <div className="flex items-center gap-4 text-xs">
-            <span className="text-foreground/60">Live Bijnor Store Status: <strong className="text-green-600">● Accepting Orders</strong></span>
+            <span className="text-foreground/60">Live Bijnor Store: <strong className="text-emerald-600">● Accepting Orders</strong></span>
             <Link href="/" target="_blank" className="font-semibold text-primary hover:underline">
-              View Live Storefront &rarr;
+              View Storefront &rarr;
             </Link>
           </div>
         </header>

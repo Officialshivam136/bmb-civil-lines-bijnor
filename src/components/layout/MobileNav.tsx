@@ -9,6 +9,11 @@ export default function MobileNav() {
   const pathname = usePathname();
   const { totalItems } = useCart();
 
+  // Hide on admin routes
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
+
   const navItems = [
     { name: 'Home', href: '/', icon: Home },
     { name: 'Menu', href: '/menu', icon: UtensilsCrossed },
@@ -32,11 +37,11 @@ export default function MobileNav() {
             >
               <div className="relative">
                 <Icon className="w-5 h-5" />
-                {item.badge && item.badge > 0 ? (
-                  <span className="absolute -top-1.5 -right-2 bg-accent text-accent-foreground text-[9px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center">
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span className="absolute -top-1 -right-2 bg-primary text-primary-foreground text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
                     {item.badge}
                   </span>
-                ) : null}
+                )}
               </div>
               <span className="text-[10px]">{item.name}</span>
             </Link>

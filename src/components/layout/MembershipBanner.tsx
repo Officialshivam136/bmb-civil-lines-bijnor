@@ -1,11 +1,17 @@
 'use client';
 
 import { useCart } from '@/context/CartContext';
+import { usePathname } from 'next/navigation';
 import { Crown, Sparkles, CheckCircle2, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 
 export default function MembershipBanner() {
+  const pathname = usePathname();
   const { isVipUser, monthlyOrderCount, vipThreshold } = useCart();
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   return (
     <div className="w-full bg-linear-to-r from-[#2a080c] via-[#5c131a] to-[#2a080c] text-white py-2 px-4 text-xs md:text-sm border-b border-[#C5A059]/30">
@@ -36,15 +42,16 @@ export default function MembershipBanner() {
 
         <div className="flex items-center gap-2.5">
           {isVipUser ? (
-            <span className="inline-flex items-center gap-1.5 bg-[#f59e0b]/20 border border-[#f59e0b]/40 text-[#fcd34d] px-3 py-0.5 rounded-full text-[11px] font-bold">
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#f59e0b]" /> 10% VIP Patron Active
-            </span>
+            <div className="inline-flex items-center gap-1.5 bg-[#f59e0b]/20 text-[#fcd34d] px-3 py-0.5 rounded-full text-[11px] font-bold border border-[#f59e0b]/40">
+              <Sparkles className="w-3 h-3 text-[#fcd34d]" />
+              <span>VIP Privilege Active</span>
+            </div>
           ) : (
             <div className="inline-flex items-center gap-1.5 bg-white/10 px-3 py-0.5 rounded-full text-[11px] font-medium text-white/80">
               <TrendingUp className="w-3 h-3 text-amber-400" />
               <span>{monthlyOrderCount}/{vipThreshold} Monthly Orders</span>
               <Link href="/#menu" className="text-amber-300 font-bold hover:underline ml-1">
-                Browse Menu &rarr;
+                Browse Menu →
               </Link>
             </div>
           )}

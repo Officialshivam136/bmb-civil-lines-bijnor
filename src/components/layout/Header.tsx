@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Search, ShoppingBag, User, QrCode } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useState, useEffect } from 'react';
@@ -8,6 +9,7 @@ import BMBLogo from '@/components/common/BMBLogo';
 import SearchBar from '@/components/common/SearchBar';
 
 export default function Header() {
+  const pathname = usePathname();
   const { totalItems } = useCart();
   const [mounted, setMounted] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
@@ -15,6 +17,11 @@ export default function Header() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Do not render consumer storefront header inside admin portal
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-xs">

@@ -1,8 +1,18 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { MapPin, Phone, Clock, Smartphone, Download } from 'lucide-react';
 import BMBLogo from '@/components/common/BMBLogo';
 
 export default function Footer() {
+  const pathname = usePathname();
+
+  // Hide on admin routes
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
+
   return (
     <footer className="bg-surface border-t border-border pt-12 pb-24 md:pb-12">
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
