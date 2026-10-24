@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { 
   IndianRupee, ShoppingBag, Clock, Users, ArrowRight, CheckCircle2, 
   ExternalLink, Plus, Ticket, Sparkles, QrCode, Box, Flame, 
-  ChevronRight, AlertCircle, Check, X, Bell, TrendingUp, RefreshCw
+  ChevronRight, AlertCircle, Check, X, Bell, TrendingUp, RefreshCw, Radio
 } from 'lucide-react';
 import { LiveOrder } from '@/lib/orderService';
 
@@ -31,6 +31,9 @@ export default function AdminOverviewClient({
   const [metrics, setMetrics] = useState(initialMetrics);
   const [viewChartAsTable, setViewChartAsTable] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isLiveConnected, setIsLiveConnected] = useState(true);
+
+  const knownOrderIdsRef = useRef<Set<string>>(new Set(initialOrders.map(o => o.id)));
 
   // Modals state
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
@@ -52,6 +55,72 @@ export default function AdminOverviewClient({
 
     const options: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'long' };
     setFormattedDate(new Date().toLocaleDateString('en-IN', options));
+  }, []);
+
+  // Web Audio chime for incoming orders
+  const playNewOrderSound = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const playTone = (freq: number, start: number, duration: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime + start);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + start + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + start);
+        osc.stop(ctx.currentTime + start + duration);
+      };
+      playTone(587.33, 0, 0.25); // D5
+      playTone(880.00, 0.15, 0.5); // A5
+    } catch (e) {
+      console.warn('Audio chime error:', e);
+    }
+  };
+
+  // Real-time live polling every 3 seconds for zero-lag sync from user checkout
+  useEffect(() => {
+    const pollLiveOrders = async () => {
+      try {
+        const res = await fetch('/api/admin/orders/live', { cache: 'no-store' });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.orders) {
+            const newOrders = json.orders as LiveOrder[];
+            let incomingCount = 0;
+            let latestNewOrder: LiveOrder | null = null;
+
+            for (const o of newOrders) {
+              if (!knownOrderIdsRef.current.has(o.id)) {
+                incomingCount++;
+                latestNewOrder = o;
+                knownOrderIdsRef.current.add(o.id);
+              }
+            }
+
+            if (incomingCount > 0 && latestNewOrder) {
+              playNewOrderSound();
+              showToast(`🔔 New Order! ${latestNewOrder.orderNumber} • ${latestNewOrder.customerName} (₹${latestNewOrder.total})`);
+            }
+
+            setOrders(newOrders);
+            if (json.metrics) {
+              setMetrics(json.metrics);
+            }
+            setIsLiveConnected(true);
+          }
+        }
+      } catch (err) {
+        setIsLiveConnected(false);
+      }
+    };
+
+    const interval = setInterval(pollLiveOrders, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const showToast = (msg: string) => {

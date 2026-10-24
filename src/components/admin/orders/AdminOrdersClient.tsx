@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   ShoppingBag, Check, Bell, CheckCircle2, Clock, 
@@ -22,6 +22,26 @@ export default function AdminOrdersClient({ initialOrders }: AdminOrdersClientPr
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  // Real-time polling every 3 seconds for live order queue
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch('/api/admin/orders/live', { cache: 'no-store' });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.orders) {
+            setOrders(json.orders);
+          }
+        }
+      } catch (err) {
+        console.warn('Orders board live sync error:', err);
+      }
+    };
+
+    const interval = setInterval(fetchOrders, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleStatusChange = async (orderId: string, status: LiveOrder['status']) => {
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));

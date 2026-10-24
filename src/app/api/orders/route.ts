@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendAdminWhatsAppNotification } from '@/lib/whatsappService';
+import { registerWebOrder } from '@/lib/orderService';
+import { revalidatePath } from 'next/cache';
 
 // Generate a guaranteed collision-free order number like #BMB-261024-4821
 async function generateUniqueOrderNumber(): Promise<string> {
@@ -155,6 +157,28 @@ export async function POST(request: Request) {
       paymentStatus: 'PENDING',
       address
     });
+
+    // Synchronize into real-time live admin panel & TV counter
+    try {
+      const summary = orderItemsData.map((it: any) => `${it.productName} (${it.quantity})`).join(', ');
+      registerWebOrder({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        customerName: customer.name.trim(),
+        customerPhone: customer.phone.trim(),
+        orderType: deliveryMethod,
+        total,
+        itemsSummary: summary,
+        itemCount: orderItemsData.length,
+        paymentMethod: paymentMethod || 'COD'
+      });
+
+      revalidatePath('/admin');
+      revalidatePath('/admin/orders');
+      revalidatePath('/tv');
+    } catch (e) {
+      console.warn('Realtime live order registration fallback:', e);
+    }
 
     return NextResponse.json({
       success: true,

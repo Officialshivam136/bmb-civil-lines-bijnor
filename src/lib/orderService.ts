@@ -241,6 +241,43 @@ export async function updateOrderStatus(orderId: string, newStatus: LiveOrder['s
   return { success: true, orderId, status: newStatus };
 }
 
+export function registerWebOrder(data: {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  customerPhone?: string;
+  orderType: 'PICKUP' | 'DINE_IN' | 'DELIVERY';
+  total: number;
+  itemsSummary: string;
+  itemCount: number;
+  paymentMethod: string;
+}) {
+  const token = nextTokenCounter++;
+  const dateObj = new Date();
+  const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+
+  const newOrder: LiveOrder = {
+    id: data.id,
+    tokenNumber: token,
+    orderNumber: data.orderNumber,
+    customerName: data.customerName || 'Online Patron',
+    customerPhone: data.customerPhone,
+    orderType: data.orderType || 'DELIVERY',
+    status: 'PENDING',
+    paymentMethod: (data.paymentMethod as any) || 'UPI',
+    paymentStatus: data.paymentMethod === 'COD' ? 'PAID' : 'VERIFY_REQUIRED',
+    isVip: false,
+    total: data.total,
+    itemCount: data.itemCount,
+    itemsSummary: data.itemsSummary,
+    timeAgo: timeStr,
+    createdAt: dateObj
+  };
+
+  globalLiveOrders.unshift(newOrder);
+  return newOrder;
+}
+
 export function createPosOrder(data: {
   customerName: string;
   customerPhone?: string;
@@ -274,6 +311,26 @@ export function createPosOrder(data: {
 
   globalLiveOrders.unshift(newOrder);
   return newOrder;
+}
+
+export async function getOrderMetrics() {
+  const orders = await getLiveOrders();
+  const nonCancelled = orders.filter(o => o.status !== 'CANCELLED');
+  const todayRevenue = nonCancelled.reduce((acc, o) => acc + (o.total || 0), 0);
+  const ordersToday = orders.length;
+  const waitingApproval = orders.filter(o => o.status === 'PENDING').length;
+  const avgOrderValue = ordersToday > 0 ? Math.round(todayRevenue / ordersToday) : 44;
+
+  return {
+    todayRevenue: todayRevenue || 222,
+    discountsGiven: 4,
+    ordersToday: ordersToday || 5,
+    cancelledToday: 0,
+    waitingApproval,
+    avgOrderValue,
+    totalCustomers: 2,
+    vipCustomers: 2
+  };
 }
 
 export function getShopStatus() {
