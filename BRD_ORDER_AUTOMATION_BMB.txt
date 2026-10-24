@@ -1,0 +1,346 @@
+================================================================================
+BUSINESS REQUIREMENTS DOCUMENT (BRD)
+PROJECT: BIKANER MISTHAN BHANDAR (BMB) — DIGITAL COMMERCE & ORDER AUTOMATION
+LOCATION: CIVIL LINES, BIJNOR, UTTAR PRADESH
+VERSION: 1.0 | DATE: OCTOBER 2026
+AUTHOR: SYSTEM ARCHITECT & ENGINEERING TEAM
+REPOSITORY: https://github.com/Officialshivam136/bmb-civil-lines-bijnor
+================================================================================
+
+1. EXECUTIVE SUMMARY
+--------------------------------------------------------------------------------
+This Business Requirements Document (BRD) details the digital ordering ecosystem
+developed for Bikaner Misthan Bhandar (BMB), Civil Lines, Bijnor. It outlines 
+the functional components completed to date, specifies the next-generation 
+order automation requiring zero-friction WhatsApp order approval for the store 
+administrator, and details an end-to-end automation suite covering automated 
+kitchen thermal printing, automated customer status notifications, automated rider 
+dispatch, and daily business performance briefings.
+
+The primary objective is operational autonomy: allowing store staff and management
+to oversee orders, approve them, update kitchen prep status, and dispatch delivery 
+without needing constant workstation or laptop attendance.
+
+
+================================================================================
+2. COMPLETED MILESTONES (WHAT HAS BEEN DONE SO FAR)
+================================================================================
+
+2.1 Pure Traditional Catalog Curation
+- Excluded all western bakery items (eggless cakes, pastries, malai chaap/rolls).
+- Curated 49 authentic Indian sweets and savory snacks across 6 primary categories:
+  1. Snacks & Chaat (Desi Samosa, Khaman Dhokla, Aloo Tikki, Dahi Vada, etc.)
+  2. Traditional Mithai (Desi Ghee Jalebi, Kala Jamun, Bengali Rasgulla, etc.)
+  3. Kaju & Dry Fruits (Kaju Katli with pure silver vark, Kaju Anjeer Roll, etc.)
+  4. Barfi & Milk Sweets (Special Milk Cake, Doda Barfi, Bikaneri Peda, etc.)
+  5. Laddu (Motichoor Desi Ghee Laddu, Besan Laddu, Atta Laddu, etc.)
+  6. Festive Sweet Gift Boxes (Chhappan Bhog Royal Mix, Celebration Boxes)
+
+2.2 Royal BMB Monogram Branding
+- Designed and integrated an authentic BMB crest emblem featuring royal burgundy 
+  (#7A1C1C) and rich gold (#C5A059) palettes across desktop, mobile, and print.
+
+2.3 Tularam-Inspired Single-Page Menu Architecture
+- Entire 49-item menu accessible seamlessly on a single scrollable page (#menu & /menu).
+- Sticky horizontal category pill bar with live item count counters.
+- Dual-language typography: English title + authentic Hindi Devanagari script 
+  (e.g., Kaju Katli / काजू कतली, Desi Samosa / देसी समोसा).
+- Inline portion selectors: Customers toggle portions (250g, 500g, 1kg, or pieces)
+  directly on the card with real-time price updates.
+- 1-Tap Inline Cart Controllers: Tapping "+ ADD" adds items without page navigation,
+  instantly transforming into an active "[-] Qty [+]" quantity manager.
+- Sticky Floating Cart Bar: Floats at bottom showing total item count, live subtotal,
+  and a direct "View Cart & Checkout" action.
+
+2.4 Monthly VIP Patron Loyalty Engine
+- Qualification Rule: A customer must place 2 or more orders within a rolling 
+  30-day window to achieve "BMB VIP Patron" status.
+- Normal Users (0 or 1 order in 30 days) pay standard pricing and view a progress 
+  tracker ("1/2 Orders this month to unlock VIP status").
+- VIP Patrons receive an automated 10% discount on all orders.
+- Real-time verification API (/api/user/vip-status) evaluates order history based on 
+  the customer's 10-digit WhatsApp number.
+
+2.5 Dual-Fulfillment Checkout
+- Store Takeaway / Counter Handover (Civil Lines Outlet): Skips address forms and 
+  sets delivery fee to zero.
+- Doorstep Express Delivery (Bijnor Municipal Limit): Prompts for address details 
+  with a standard ₹40 delivery fee.
+
+2.6 Counter & Dine-in QR Code System
+- Instant Mobile Ordering (/qr-order): Customers scan QR codes at physical tables 
+  or the store counter using any phone camera, Google Lens, Paytm, or PhonePe.
+- Automated Handover Mode: Scans default to "Counter Pickup" with zero friction.
+- Dine-In Table Service: Supports table identifiers (?table=3) that reflect directly
+  on order tokens.
+- Printable QR Stand Generator (/admin/qr-stands): 1-click printable A5 standees 
+  and table tents formatted for acrylic holders.
+
+2.7 Store Administration Dashboard
+- Password-protected portal (/admin/login) with cookie authentication.
+- Real-time revenue summaries, daily order volumes, and order tracking timeline.
+- Individual order detail viewer (/admin/orders/[id]) with status advancement 
+  (PENDING -> CONFIRMED -> PREPARING -> READY_FOR_PICKUP -> DELIVERED).
+
+2.8 Hybrid Android Mobile Application
+- Built using Capacitor Android SDK.
+- Direct APK download available at /bmb-misthan-bijnor.apk (4.1 MB).
+
+2.9 Source Code Control
+- Version controlled and published on GitHub:
+  Repository: https://github.com/Officialshivam136/bmb-civil-lines-bijnor
+
+
+================================================================================
+3. CORE REQUIREMENT: WHATSAPP-BASED ORDER AUTOMATION & ADMIN APPROVAL
+================================================================================
+
+3.1 Problem Statement
+Currently, the store manager must log in to the administrative web panel on a 
+browser to review new orders and manually click status buttons. In a busy sweet shop 
+like BMB Civil Lines, staff cannot monitor a screen during peak rush hours 
+(mornings 10 AM-1 PM and festive evenings 5 PM-9 PM).
+
+3.2 Business Objective
+Automate the notification and approval lifecycle completely through WhatsApp:
+1. Every time a customer places an order on the website or mobile app, the Admin/Store 
+   Manager must receive an instant WhatsApp alert.
+2. The Admin must be able to review, approve, or reject the order directly within 
+   WhatsApp without opening the web portal.
+3. The customer's order status on the website must immediately reflect the approval.
+
+3.3 Functional Specifications for WhatsApp Admin Notification
+
+3.3.1 Notification Trigger:
+- Triggered on HTTP POST /api/orders upon successful database transaction.
+- Outbound alert dispatched to Admin WhatsApp Number (+91 89791 64646 / Designated Owner).
+
+3.3.2 Message Structure & Payload:
+--------------------------------------------------------------------------------
+🚨 *NEW ORDER RECEIVED — BMB BIJNOR*
+Order No: *#BMB-001005*
+Type: *🏬 COUNTER PICKUP* (or *🛵 DOORSTEP DELIVERY*)
+Customer: *Gaurav Sharma*
+Phone: *+91 9876543210*
+Patron Status: *👑 VIP Patron (10% Discount Applied)*
+
+*ITEMS ORDERED:*
+• Kaju Katli (Pure Silver Vark) [500g] x 1 — ₹550
+• Desi Samosa [2 pieces] x 2 — ₹88
+• Spongy Bengali Rasgulla [500g] x 1 — ₹220
+
+*FINANCIAL SUMMARY:*
+• Subtotal: ₹858
+• VIP Discount (10%): -₹86
+• Delivery Charge: ₹0 (Counter Handover)
+• *Total Payable:* *₹772*
+• Payment: *Pay at Counter (Cash/UPI)*
+
+📍 *Delivery/Pickup Note:* Counter Pickup at Civil Lines
+⏰ *Time:* 24-Oct-2026, 12:45 PM
+--------------------------------------------------------------------------------
+
+3.4 WhatsApp Approval Mechanisms (3 Architectural Options)
+
+Option A: Interactive Quick Action Buttons (Recommended via WhatsApp Business Cloud API)
+- The WhatsApp message includes 3 interactive buttons below the text:
+  [ ✅ Approve Order ]   [ ⏳ Start Preparing ]   [ ❌ Reject / Out of Stock ]
+- Clicking "✅ Approve Order" sends an automated webhook back to our Next.js API 
+  (/api/webhooks/whatsapp), which:
+  1. Updates order status in database from PENDING to CONFIRMED.
+  2. Sends an instant confirmation ping to the customer.
+  3. Returns a WhatsApp reply to admin: "✅ Order #BMB-001005 has been approved."
+
+Option B: Two-Way Conversational Text Commands
+- The admin simply replies to the WhatsApp message with short codes:
+  - Replying: "OK 1005" or "APPROVE 1005" -> Confirms order.
+  - Replying: "READY 1005" -> Sets status to READY_FOR_PICKUP.
+  - Replying: "REJECT 1005" -> Cancels order.
+- Inbound webhook parses the text, extracts the order ID, and triggers database update.
+
+Option C: 1-Tap Secure Admin Mobile Action Link
+- Every notification contains an authenticated 1-tap quick action link:
+  "👉 Tap to Approve: https://bmb-bijnor.com/api/orders/quick-action?id=cmv...&action=APPROVE&token=xyz"
+- Tapping the link opens a clean 1-second confirmation modal on the manager's phone.
+
+
+================================================================================
+4. EXTENDED AUTOMATION OPPORTUNITIES (WHAT ELSE CAN BE AUTOMATED)
+================================================================================
+
+To transform BMB Civil Lines into an autonomous digital sweet shop, the following 
+automation modules are specified for implementation:
+
+--------------------------------------------------------------------------------
+4.1 Automated Customer WhatsApp Journey (End-to-End Status Pings)
+--------------------------------------------------------------------------------
+Customers should receive automated updates on WhatsApp without staff typing messages:
+- Trigger 1 (On Order Placement):
+  "Namaste Gaurav ji! We have received your order #BMB-001005 at Bikaner Misthan 
+   Bhandar, Civil Lines. We are reviewing it now. Track live: [Tracking Link]"
+- Trigger 2 (On Admin WhatsApp Approval):
+  "Your order #BMB-001005 has been CONFIRMED by our counter master! Our halwais 
+   are freshly packing your sweets."
+- Trigger 3 (When Marked Ready for Counter Pickup):
+  "🔔 Your fresh sweets box is READY for handover! Please visit the BMB Civil 
+   Lines counter and show Order #BMB-001005 to collect."
+- Trigger 4 (When Dispatched for Doorstep Delivery):
+  "🛵 Your order is out for delivery with our rider Ramesh (+91 98765 00000). 
+   Delivering to Civil Lines in ~25 minutes."
+
+--------------------------------------------------------------------------------
+4.2 Automated Kitchen Cloud Thermal Printing (KOT Automation)
+--------------------------------------------------------------------------------
+- As soon as the Admin taps "Approve" on WhatsApp, an automated ESC/POS print 
+  job is dispatched over Wi-Fi/Bluetooth to a 58mm or 80mm thermal receipt printer 
+  stationed at the sweets packaging counter.
+- The kitchen receipt automatically prints:
+  - Bold Order Number (#BMB-001005)
+  - Time & Fulfillment Mode (COUNTER PICKUP or DELIVERY)
+  - Table Number (if dine-in)
+  - Exact weight breakdown (e.g., Kaju Katli 500g, Samosa 4 pcs)
+- Eliminates manual handwriting of packing slips.
+
+--------------------------------------------------------------------------------
+4.3 Automated Delivery Rider Dispatch
+--------------------------------------------------------------------------------
+- For orders with fulfillment mode "DOORSTEP DELIVERY":
+- Upon approval, the system triggers an automated WhatsApp message to the store's 
+  delivery rider group or assigned rider:
+  "📦 *NEW BIJNOR DELIVERY ASSIGNMENT*
+   Order: #BMB-001005
+   Customer: Gaurav Sharma (+91 9876543210)
+   Address: House 12, Nai Basti / Civil Lines, Near Classic Bar, Bijnor
+   Collect from Counter: ₹772 (COD)
+   Google Maps Navigation: https://maps.google.com/?q=29.37,78.13"
+
+--------------------------------------------------------------------------------
+4.4 Automated UPI Payment Reconciliation & Soundbox Integration
+--------------------------------------------------------------------------------
+- Real-time payment verification webhook (e.g., Razorpay / Cashfree / PhonePe PG).
+- When a customer pays via UPI QR on the website or counter, the payment gateway 
+  sends a webhook that marks the order as "PAID" instantly.
+- Optional integration with Paytm / PhonePe Soundbox API to announce:
+  "₹772 received on Bikaner Misthan Bhandar UPI for Order 1005."
+
+--------------------------------------------------------------------------------
+4.5 Automated Real-Time Inventory & Out-of-Stock Suppression
+--------------------------------------------------------------------------------
+- Every placed order decrements the available stock of the specific weight variant.
+- If daily morning batches of hot Jalebi or Samosa reach zero stock, the website 
+  automatically switches the item badge to "Sold Out Today" and prevents customers 
+  from ordering that specific item.
+- Automated alert to owner: "⚠️ Desi Ghee Samosa is running low (only 4 pieces left)."
+
+--------------------------------------------------------------------------------
+4.6 Automated Post-Delivery Customer Review & Loyalty Collection
+--------------------------------------------------------------------------------
+- 60 minutes after an order is marked DELIVERED or COLLECTED:
+- Automated WhatsApp follow-up:
+  "Hope you enjoyed the authentic taste of BMB Civil Lines sweets! 
+   How was your experience?
+   ⭐ Rate us on Google: https://g.page/r/bmb-bijnor/review
+   (Reviewing unlocks an extra ₹50 coupon for your next celebration!)"
+- Drastically boosts local Google Maps SEO and footfall for the Civil Lines store.
+
+--------------------------------------------------------------------------------
+4.7 Automated End-of-Day (EOD) Business Intelligence Briefing
+--------------------------------------------------------------------------------
+- Scheduled daily at 10:15 PM (closing time):
+- An automated cron job generates and sends an executive summary to the owner's WhatsApp:
+  ------------------------------------------------------------------------------
+  📊 *BMB CIVIL LINES — DAILY SALES CLOSING REPORT*
+  Date: 24-Oct-2026
+
+  • Total Orders Processed: 42
+  • Total Gross Revenue: ₹38,450
+  • Counter Pickups: 26 orders (₹22,100)
+  • Home Deliveries: 16 orders (₹16,350)
+  • Cash on Hand: ₹14,200 | Online/UPI: ₹24,250
+  • Top Selling Sweets:
+    1. Kaju Katli (14.5 kg sold)
+    2. Motichoor Laddu (18 kg sold)
+    3. Desi Samosa (142 pieces sold)
+  • Active VIP Patrons Served: 18
+  ------------------------------------------------------------------------------
+
+
+================================================================================
+5. TECHNICAL ARCHITECTURE & WORKFLOW
+================================================================================
+
+5.1 End-to-End Automated Dataflow
+
+[Customer Places Order on Web/App]
+               │
+               ▼
+   Next.js API (/api/orders)
+   - Generates #BMB Order Number
+   - Validates Stock & VIP Status (>= 2 orders in 30 days)
+   - Saves to Database (Status: PENDING)
+               │
+               ▼
+   Automated Dispatcher Service
+   - Triggers WhatsApp API (Meta Cloud / Twilio / Gupshup)
+               │
+               ▼
+   [Store Admin Receives WhatsApp Message on Phone]
+   - Shows complete item breakdown + customer details
+   - Shows action buttons: [Approve] / [Reject]
+               │
+               ▼
+   [Admin Taps "Approve" in WhatsApp]
+               │
+               ▼
+   Webhook Handler (/api/webhooks/whatsapp)
+   - Validates secure HMAC signature
+   - Updates Order Status to CONFIRMED
+               │
+      ┌────────┴───────────────────────────┐
+      ▼                                    ▼
+[Thermal Cloud Printer]         [Customer WhatsApp Ping]
+Prints Kitchen KOT Slip          "Your order #BMB-1005 is CONFIRMED!"
+
+
+5.2 Recommended WhatsApp API Providers
+1. Meta WhatsApp Business Cloud API (Direct official integration, lowest per-message cost).
+2. Gupshup / Wati / Twilio (Turnkey managed providers with pre-approved interactive button templates).
+
+5.3 Security & Resiliency
+- Webhook Authentication: Signed with WhatsApp webhook secret token.
+- Admin Authorization: Only replies or button clicks from authorized admin phone 
+  numbers (+91 89791 64646 or owner phone) are accepted.
+- Fallback Channel: If WhatsApp delivery fails within 3 minutes, an automated SMS 
+  alert is dispatched as redundancy.
+
+
+================================================================================
+6. IMPLEMENTATION ROADMAP & PHASING
+================================================================================
+
+Phase 1: Foundations & Storefront (COMPLETED)
+- 49-item pure traditional catalog.
+- Tularam single-page menu with 1-click portion selection.
+- QR counter stands & table tent generator.
+- 10% VIP loyalty calculation engine.
+- Password-protected admin portal.
+- Capacitor Android APK.
+
+Phase 2: WhatsApp Admin Notification & Approval Automation (NEXT STEP)
+- Set up WhatsApp Business Cloud API / Gateway credentials.
+- Create /api/webhooks/whatsapp endpoint.
+- Implement interactive WhatsApp template for inbound orders.
+- Connect WhatsApp button clicks to order status updates in Prisma DB.
+
+Phase 3: Thermal Printing & Rider Dispatch Automation
+- Connect cloud thermal receipt printer via ESC/POS protocol.
+- Build automated delivery boy WhatsApp dispatch routing with Google Maps pins.
+
+Phase 4: Customer Lifecycle & EOD Financial Reporting
+- Customer auto-pings (Confirmed -> Ready -> Delivered).
+- Post-delivery automated Google Review generator.
+- Daily 10:15 PM automated sales audit sent to owner's WhatsApp.
+
+================================================================================
+END OF BUSINESS REQUIREMENTS DOCUMENT
+================================================================================
