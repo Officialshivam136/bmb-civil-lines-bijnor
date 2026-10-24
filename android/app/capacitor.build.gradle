@@ -1,0 +1,16 @@
+// Override generated capacitor.build.gradle to match system Java 19
+android {
+  compileOptions {
+      sourceCompatibility JavaVersion.VERSION_19
+      targetCompatibility JavaVersion.VERSION_19
+  }
+}
+
+apply from: "../capacitor-cordova-android-plugins/cordova.variables.gradle"
+dependencies {
+
+}
+
+if (hasProperty('postBuildExtras')) {
+  postBuildExtras()
+}
