@@ -2,6 +2,7 @@
 
 > **Official Digital Ordering Platform & Hybrid Mobile App for Bikaner Misthan Bhandar, Civil Lines, Bijnor (U.P.)**  
 > *Authentic Pure Desi Ghee Traditional Mithai, Samosas, Dhokla, and Celebration Treat Boxes.*
+> **🌐 Live Production Deployment:** https://bmb-civil-lines-bijnor.vercel.app
 
 ---
 
