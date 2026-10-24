@@ -7,7 +7,7 @@
 
 ## 🌟 Key Features
 
-### 1. 📜 Tularam-Style Single-Page Menu
+### 1. 📜Single-Page Menu
 - **All 49 Traditional Items on One Page:** Seamless browsing without page reloads.
 - **Dual-Language Typography:** English & authentic Hindi Devanagari titles (*Kaju Katli / काजू कतली*, *Desi Samosa / देसी समोसा*, *Spongy Rasgulla / स्पंजी रसगुल्ला*).
 - **Inline Portion Selector:** Switch between `250g`, `500g`, `1kg`, or piece quantities right on the card with real-time price updates.
