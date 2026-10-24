@@ -18,8 +18,8 @@ export default function Header() {
     setMounted(true);
   }, []);
 
-  // Do not render consumer storefront header inside admin portal
-  if (pathname?.startsWith('/admin')) {
+  // Do not render consumer storefront header inside admin portal or TV display
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/tv')) {
     return null;
   }
 

@@ -9,8 +9,8 @@ export default function MobileNav() {
   const pathname = usePathname();
   const { totalItems } = useCart();
 
-  // Hide on admin routes
-  if (pathname?.startsWith('/admin')) {
+  // Hide on admin routes or TV screen
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/tv')) {
     return null;
   }
 

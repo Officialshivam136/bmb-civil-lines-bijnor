@@ -17,7 +17,7 @@ export default function FloatingCartBar() {
 
   // Don't display on checkout, cart, or admin paths
   if (!mounted || totalItems === 0) return null;
-  if (pathname === '/cart' || pathname === '/checkout' || pathname?.startsWith('/admin')) {
+  if (pathname === '/cart' || pathname === '/checkout' || pathname?.startsWith('/admin') || pathname?.startsWith('/tv')) {
     return null;
   }
 

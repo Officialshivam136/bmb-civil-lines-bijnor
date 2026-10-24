@@ -9,7 +9,7 @@ export default function MembershipBanner() {
   const pathname = usePathname();
   const { isVipUser, monthlyOrderCount, vipThreshold } = useCart();
 
-  if (pathname?.startsWith('/admin')) {
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/tv')) {
     return null;
   }
 

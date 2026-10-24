@@ -8,8 +8,8 @@ import BMBLogo from '@/components/common/BMBLogo';
 export default function Footer() {
   const pathname = usePathname();
 
-  // Hide on admin routes
-  if (pathname?.startsWith('/admin')) {
+  // Hide on admin routes or TV display
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/tv')) {
     return null;
   }
 
