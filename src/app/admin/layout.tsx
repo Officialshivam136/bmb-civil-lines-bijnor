@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { Package, ShoppingCart, LayoutDashboard, Settings, LogOut, PlusCircle, QrCode } from 'lucide-react';
+import { Package, ShoppingCart, LayoutDashboard, Settings, LogOut, PlusCircle, QrCode, Users } from 'lucide-react';
 import BMBLogo from '@/components/common/BMBLogo';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -44,6 +44,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           >
             <ShoppingCart className="w-4 h-4" />
             <span>Manage Orders</span>
+          </Link>
+
+          <Link 
+            href="/admin/crm" 
+            className="flex items-center gap-3 px-3.5 py-3 rounded-xl hover:bg-amber-500/10 text-amber-800 font-bold transition-colors"
+          >
+            <Users className="w-4 h-4 text-amber-600" />
+            <span>Patron CRM & WhatsApp</span>
           </Link>
 
           <Link 

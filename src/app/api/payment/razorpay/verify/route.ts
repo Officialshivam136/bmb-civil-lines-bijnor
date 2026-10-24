@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { razorpayKeySecret } from '@/lib/razorpay';
+import { sendAdminWhatsAppNotification } from '@/lib/whatsappService';
 
 export async function POST(request: Request) {
   try {
@@ -47,6 +48,43 @@ export async function POST(request: Request) {
         }
       })
     ]);
+
+    // Send instant WhatsApp notification to shop owner with PAID status
+    try {
+      const confirmedOrder = await prisma.order.findUnique({
+        where: { id: orderId },
+        include: { items: true, address: true, user: true }
+      });
+
+      if (confirmedOrder) {
+        await sendAdminWhatsAppNotification({
+          orderNumber: confirmedOrder.orderNumber,
+          orderId: confirmedOrder.id,
+          createdAt: confirmedOrder.createdAt,
+          customerName: confirmedOrder.address?.name || confirmedOrder.user?.name || 'Valued Patron',
+          customerPhone: confirmedOrder.address?.phone || confirmedOrder.user?.phone || '8979164646',
+          orderType: confirmedOrder.orderType,
+          notes: confirmedOrder.notes,
+          items: confirmedOrder.items.map((it) => ({
+            productName: it.productName,
+            variantName: it.variantName,
+            quantity: it.quantity,
+            price: it.price,
+            total: it.total
+          })),
+          subtotal: confirmedOrder.subtotal,
+          discount: confirmedOrder.discount,
+          deliveryFee: confirmedOrder.deliveryFee,
+          total: confirmedOrder.total,
+          paymentMethod: 'RAZORPAY',
+          paymentStatus: 'SUCCESS',
+          transactionId: razorpay_payment_id,
+          address: confirmedOrder.address
+        });
+      }
+    } catch (notifyErr) {
+      console.warn('Admin WhatsApp notification warning:', notifyErr);
+    }
 
     return NextResponse.json({
       success: true,

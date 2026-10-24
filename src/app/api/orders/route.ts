@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { sendAdminWhatsAppNotification } from '@/lib/whatsappService';
 
 // Generate a guaranteed collision-free order number like #BMB-261024-4821
 async function generateUniqueOrderNumber(): Promise<string> {
@@ -136,7 +137,32 @@ export async function POST(request: Request) {
       return newOrder;
     });
 
-    return NextResponse.json({ success: true, orderId: order.id, orderNumber: order.orderNumber, total });
+    // Auto-trigger WhatsApp notification to shop owner (+91 89791 64646)
+    const waResult = await sendAdminWhatsAppNotification({
+      orderNumber: order.orderNumber,
+      orderId: order.id,
+      createdAt: order.createdAt,
+      customerName: customer.name.trim(),
+      customerPhone: customer.phone.trim(),
+      orderType: deliveryMethod,
+      notes: order.notes,
+      items: orderItemsData,
+      subtotal: serverSubtotal,
+      discount: discountVal,
+      deliveryFee,
+      total,
+      paymentMethod: paymentMethod || 'COD',
+      paymentStatus: 'PENDING',
+      address
+    });
+
+    return NextResponse.json({
+      success: true,
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      total,
+      adminWhatsAppUrl: waResult.url
+    });
   } catch (error: any) {
     console.error('Error creating order:', error);
     return NextResponse.json({ error: error?.message || 'Failed to create order' }, { status: 500 });
