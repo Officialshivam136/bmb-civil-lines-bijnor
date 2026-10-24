@@ -1,64 +1,52 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
-import { Crown, Sparkles, CheckCircle2, ArrowRight } from 'lucide-react';
-import { useState } from 'react';
+import { Crown, Sparkles, CheckCircle2, TrendingUp } from 'lucide-react';
+import Link from 'next/link';
 
 export default function MembershipBanner() {
-  const { isReturningCustomer, isClubMember, joinClubMembership } = useCart();
-  const [joinedToast, setJoinedToast] = useState(false);
-
-  const handleJoin = () => {
-    joinClubMembership();
-    setJoinedToast(true);
-    setTimeout(() => setJoinedToast(false), 3500);
-  };
+  const { isVipUser, monthlyOrderCount, vipThreshold } = useCart();
 
   return (
-    <div className="w-full bg-gradient-to-r from-[#2a080c] via-[#5c131a] to-[#2a080c] text-white py-2.5 px-4 text-xs md:text-sm border-b border-[#f59e0b]/30">
+    <div className="w-full bg-linear-to-r from-[#2a080c] via-[#5c131a] to-[#2a080c] text-white py-2 px-4 text-xs md:text-sm border-b border-[#C5A059]/30">
       <div className="container mx-auto flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-[#f59e0b] text-[#7a121d] flex items-center justify-center font-bold shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="w-6 h-6 rounded-full bg-[#f59e0b] text-[#7a121d] flex items-center justify-center font-bold shrink-0 shadow-xs">
             <Crown className="w-3.5 h-3.5" />
           </div>
           <div>
-            {isReturningCustomer || isClubMember ? (
+            {isVipUser ? (
               <span className="font-medium text-white/95">
-                <strong className="text-[#fcd34d] font-bold">Welcome Back, Esteemed Patron!</strong>{' '}
-                Your <span className="underline decoration-[#f59e0b]">10% Privilege Discount</span> is active on all orders today.
+                <strong className="text-[#fcd34d] font-bold">👑 BMB VIP Patron:</strong>{' '}
+                You have ordered <strong className="text-white underline">{monthlyOrderCount} times</strong> in the past month! Automatic <span className="text-[#fcd34d] font-bold underline decoration-[#f59e0b]">10% VIP Discount</span> is active.
+              </span>
+            ) : monthlyOrderCount === 1 ? (
+              <span className="font-medium text-white/95">
+                <strong className="text-[#fcd34d] font-bold">⭐ 1/2 Orders This Month:</strong>{' '}
+                Order just 1 more time this month to achieve <span className="text-[#fcd34d] font-bold">VIP Patron</span> status with flat 10% OFF!
               </span>
             ) : (
               <span className="font-medium text-white/95">
-                <strong className="text-[#fcd34d] font-bold">Bikaner Elite Club:</strong>{' '}
-                Returning patrons & members get flat <span className="text-[#fcd34d] font-bold">10% OFF</span> on every order!
+                <strong className="text-[#fcd34d] font-bold">BMB Patron Rewards:</strong>{' '}
+                Order twice or thrice in a month to unlock <span className="text-[#fcd34d] font-bold">VIP Patron</span> status with flat 10% OFF on all sweets!
               </span>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {!(isReturningCustomer || isClubMember) ? (
-            <button
-              onClick={handleJoin}
-              className="bg-[#f59e0b] hover:bg-[#d97706] text-[#7a121d] font-bold px-3 py-1 rounded-full text-xs transition-transform transform active:scale-95 shadow-sm"
-            >
-              Claim 10% Discount
-            </button>
-          ) : (
-            <span className="inline-flex items-center gap-1 bg-[#f59e0b]/20 border border-[#f59e0b]/40 text-[#fcd34d] px-2.5 py-0.5 rounded-full text-[11px] font-semibold">
-              <CheckCircle2 className="w-3 h-3 text-[#f59e0b]" /> 10% Active VIP Member
+        <div className="flex items-center gap-2.5">
+          {isVipUser ? (
+            <span className="inline-flex items-center gap-1.5 bg-[#f59e0b]/20 border border-[#f59e0b]/40 text-[#fcd34d] px-3 py-0.5 rounded-full text-[11px] font-bold">
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#f59e0b]" /> 10% VIP Patron Active
             </span>
-          )}
-
-          {joinedToast && (
-            <motion.span
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="text-[#fcd34d] font-bold"
-            >
-              🎉 VIP Membership Activated!
-            </motion.span>
+          ) : (
+            <div className="inline-flex items-center gap-1.5 bg-white/10 px-3 py-0.5 rounded-full text-[11px] font-medium text-white/80">
+              <TrendingUp className="w-3 h-3 text-amber-400" />
+              <span>{monthlyOrderCount}/{vipThreshold} Monthly Orders</span>
+              <Link href="/#menu" className="text-amber-300 font-bold hover:underline ml-1">
+                Browse Menu &rarr;
+              </Link>
+            </div>
           )}
         </div>
       </div>

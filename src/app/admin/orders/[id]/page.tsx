@@ -15,6 +15,20 @@ export default async function AdminOrderDetailPage(props: { params: Promise<{ id
     notFound();
   }
 
+  // Calculate if customer has ordered >= 2 times in the last 30 days
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  let customerMonthlyOrders = 1;
+  if (order.address?.phone) {
+    customerMonthlyOrders = await prisma.order.count({
+      where: {
+        address: { phone: order.address.phone },
+        createdAt: { gte: thirtyDaysAgo },
+        status: { not: 'CANCELLED' }
+      }
+    });
+  }
+  const isVipCustomer = customerMonthlyOrders >= 2;
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <Link href="/admin/orders" className="flex items-center gap-2 text-sm text-foreground/60 hover:text-primary transition-colors">
@@ -48,6 +62,18 @@ export default async function AdminOrderDetailPage(props: { params: Promise<{ id
               )}
             </div>
           )}
+          <div className="pt-2 border-t border-border/60 text-xs">
+            <span className="font-medium text-foreground/60 mr-1.5">Patron Classification:</span>
+            {isVipCustomer ? (
+              <span className="inline-flex items-center gap-1 font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full">
+                👑 VIP Patron ({customerMonthlyOrders} orders this month)
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 font-medium text-neutral-600 bg-neutral-100 px-2.5 py-0.5 rounded-full">
+                Normal User ({customerMonthlyOrders}/2 orders this month)
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="bg-surface border border-border p-6 rounded-2xl space-y-4">

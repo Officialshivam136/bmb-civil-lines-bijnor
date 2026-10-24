@@ -9,7 +9,18 @@ import { Truck, Store, MapPin, CheckCircle2, Crown, Tag } from 'lucide-react';
 export default function CheckoutPage() {
   const router = useRouter();
   const { data: session } = useSession();
-  const { items, subtotal, discountAmount, finalTotal, clearCart, totalItems } = useCart();
+  const { 
+    items, 
+    subtotal, 
+    discountAmount, 
+    finalTotal, 
+    clearCart, 
+    totalItems,
+    isVipUser,
+    monthlyOrderCount,
+    checkVipByPhone,
+    recordOrderPlaced
+  } = useCart();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -56,6 +67,14 @@ export default function CheckoutPage() {
     }
   }, [mounted, items.length, router, session]);
 
+  // Live VIP verification when 10-digit phone number is entered
+  useEffect(() => {
+    const clean = customer.phone.replace(/\D/g, '');
+    if (clean.length === 10) {
+      checkVipByPhone(clean);
+    }
+  }, [customer.phone, checkVipByPhone]);
+
   const deliveryFee = deliveryMethod === 'DELIVERY' ? 40 : 0;
   const grandTotal = finalTotal + deliveryFee;
 
@@ -96,11 +115,8 @@ export default function CheckoutPage() {
         throw new Error(data.error || 'Failed to place order');
       }
 
-      // Mark user as having ordered so returning customer 10% discount is permanently remembered
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('bmb_has_ordered', 'true');
-        localStorage.setItem('bmb_club_member', 'true');
-      }
+      // Record order in monthly history for VIP qualification (>= 2 orders a month)
+      recordOrderPlaced(data.orderId, customer.phone);
 
       clearCart();
       router.push(`/order-confirmation/${data.orderId}`);
@@ -207,6 +223,25 @@ export default function CheckoutPage() {
                     className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-sm focus:ring-1 focus:ring-primary outline-none"
                     required
                   />
+                  {customer.phone.replace(/\D/g, '').length === 10 && (
+                    <div className="mt-2 text-xs">
+                      {isVipUser ? (
+                        <div className="flex items-center gap-1.5 text-amber-800 bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 rounded-xl font-bold">
+                          <Crown className="w-3.5 h-3.5 text-[#f59e0b] shrink-0" />
+                          <span>👑 VIP Patron Verified: {monthlyOrderCount} orders this month! 10% VIP discount applied.</span>
+                        </div>
+                      ) : monthlyOrderCount === 1 ? (
+                        <div className="flex items-center gap-1.5 text-blue-800 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-xl font-semibold">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          <span>⭐ 1/2 Monthly Orders: Welcome back! This 2nd order qualifies you for VIP Patron status!</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-foreground/70 bg-surface border border-border px-3 py-1.5 rounded-xl text-[11px]">
+                          <span>Normal User: Order 2 or more times a month to unlock 10% VIP discount on all sweets.</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -330,7 +365,7 @@ export default function CheckoutPage() {
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-green-700 font-bold">
                     <span className="flex items-center gap-1">
-                      <Crown className="w-3.5 h-3.5" /> 10% Member Discount
+                      <Crown className="w-3.5 h-3.5" /> {isVipUser ? 'VIP Patron 10% Discount' : 'Coupon Promo Discount'}
                     </span>
                     <span>-₹{discountAmount}</span>
                   </div>

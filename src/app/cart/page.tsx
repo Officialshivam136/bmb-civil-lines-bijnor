@@ -13,9 +13,9 @@ export default function CartPage() {
     removeFromCart, 
     subtotal, 
     totalItems,
-    isReturningCustomer,
-    isClubMember,
-    joinClubMembership,
+    isVipUser,
+    monthlyOrderCount,
+    vipThreshold,
     appliedPromoCode,
     applyPromoCode,
     removePromoCode,
@@ -131,30 +131,43 @@ export default function CartPage() {
             </div>
           ))}
 
-          {/* Membership Banner Inside Cart */}
-          {!(isReturningCustomer || isClubMember) ? (
-            <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-white border border-amber-500/30 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* VIP Status Banner Inside Cart */}
+          {isVipUser ? (
+            <div className="bg-amber-500/10 border border-amber-500/40 rounded-2xl p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#f59e0b] text-[#7a121d] flex items-center justify-center font-bold shrink-0">
+                <Crown className="w-5 h-5" />
+              </div>
+              <div className="text-xs text-foreground">
+                <strong className="font-bold text-amber-800 text-sm block">👑 BMB VIP Patron Active!</strong>
+                You have ordered <strong className="text-primary">{monthlyOrderCount} times</strong> in the past month. A flat 10% VIP privilege discount is automatically applied to your cart.
+              </div>
+            </div>
+          ) : monthlyOrderCount === 1 ? (
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#f59e0b] text-[#7a121d] flex items-center justify-center font-bold shrink-0">
+                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold shrink-0">
                   <Crown className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm text-foreground">Join Bikaner Elite Patron Club</h4>
-                  <p className="text-xs text-foreground/70">Get an instant 10% privilege discount on this order & all future orders.</p>
+                  <h4 className="font-bold text-sm text-foreground">⭐ 1/2 Orders This Month</h4>
+                  <p className="text-xs text-foreground/70">
+                    You have placed 1 order in the past 30 days. Complete this order to become a <strong>BMB VIP Patron</strong> and unlock 10% OFF on all future orders!
+                  </p>
                 </div>
               </div>
-              <button
-                onClick={joinClubMembership}
-                className="bg-[#f59e0b] hover:bg-[#d97706] text-[#7a121d] font-bold px-4 py-2 rounded-xl text-xs shrink-0 shadow-sm transition-transform active:scale-95"
-              >
-                Enroll Free (10% OFF)
-              </button>
             </div>
           ) : (
-            <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-4 flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-              <div className="text-xs text-green-950 font-medium">
-                <strong className="font-bold text-green-800">Privilege 10% Discount Active!</strong> As a valued returning customer, you automatically save 10% on every order.
+            <div className="bg-surface border border-border rounded-2xl p-4 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">
+                  <Crown className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-foreground">Standard User Status (0/2 Monthly Orders)</h4>
+                  <p className="text-xs text-foreground/70">
+                    Order 2 or more times in a month to automatically unlock <strong>VIP Patron Status (10% OFF)</strong>.
+                  </p>
+                </div>
               </div>
             </div>
           )}
@@ -211,7 +224,7 @@ export default function CartPage() {
               {discountAmount > 0 && (
                 <div className="flex justify-between text-green-700 font-semibold">
                   <span className="flex items-center gap-1">
-                    <Crown className="w-3.5 h-3.5" /> Patron 10% Discount
+                    <Crown className="w-3.5 h-3.5" /> {isVipUser ? 'VIP Patron 10% Discount' : 'Coupon Promo Discount'}
                   </span>
                   <span>-₹{discountAmount}</span>
                 </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 export interface CartItem {
   id: string; // Unique cart item ID (product.id + variant.id)
@@ -21,14 +21,17 @@ interface CartContextType {
   clearCart: () => void;
   subtotal: number;
   totalItems: number;
-  // Loyalty / Returning Member System
-  isReturningCustomer: boolean;
-  isClubMember: boolean;
-  joinClubMembership: () => void;
+  // VIP System: >= 2 orders in a month (last 30 days)
+  isVipUser: boolean;
+  monthlyOrderCount: number;
+  vipThreshold: number;
+  checkVipByPhone: (phone: string) => Promise<{ isVip: boolean; monthlyOrderCount: number; message: string }>;
+  recordOrderPlaced: (orderId: string, phone?: string) => void;
+  // Promo Engine
   appliedPromoCode: string | null;
   applyPromoCode: (code: string) => { success: boolean; message: string };
   removePromoCode: () => void;
-  discountRate: number; // e.g. 0.10 for 10%
+  discountRate: number; // 0.10 for 10%
   discountAmount: number;
   finalTotal: number;
 }
@@ -38,13 +41,14 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isReturningCustomer, setIsReturningCustomer] = useState(false);
-  const [isClubMember, setIsClubMember] = useState(false);
+  const [monthlyOrderCount, setMonthlyOrderCount] = useState<number>(0);
+  const [isVipUser, setIsVipUser] = useState<boolean>(false);
   const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
+  const vipThreshold = 2;
 
-  // Load from local storage & detect returning visitor
+  // Load from local storage & evaluate monthly orders
   useEffect(() => {
-    // 1. Load Cart
+    // 1. Load Cart Items
     const saved = localStorage.getItem('bmb_cart');
     if (saved) {
       try {
@@ -54,22 +58,37 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // 2. Returning Customer & Membership detection
-    const visits = parseInt(localStorage.getItem('bmb_visit_count') || '0', 10);
-    const hasPlacedPreviousOrder = localStorage.getItem('bmb_has_ordered') === 'true';
-    const isMember = localStorage.getItem('bmb_club_member') === 'true';
+    // 2. Load and filter order history within the last 30 days (1 month)
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const rawOrders = localStorage.getItem('bmb_monthly_orders');
+    let validTimestamps: number[] = [];
 
-    // Increment visit count
-    localStorage.setItem('bmb_visit_count', String(visits + 1));
-
-    // A returning customer is someone who visited more than once or already ordered or enrolled in membership
-    if (visits > 0 || hasPlacedPreviousOrder || isMember) {
-      setIsReturningCustomer(true);
+    if (rawOrders) {
+      try {
+        const parsed = JSON.parse(rawOrders);
+        if (Array.isArray(parsed)) {
+          // Keep only orders placed in the last 30 days
+          validTimestamps = parsed.filter((timestamp: number) => typeof timestamp === 'number' && timestamp >= thirtyDaysAgo);
+        }
+      } catch (e) {
+        console.error('Failed to parse order history', e);
+      }
     }
 
-    if (isMember) {
-      setIsClubMember(true);
+    // Check legacy order flag if present
+    const hasLegacyOrder = localStorage.getItem('bmb_has_ordered') === 'true';
+    if (hasLegacyOrder && validTimestamps.length === 0) {
+      validTimestamps.push(Date.now() - 5 * 24 * 60 * 60 * 1000); // 1 order 5 days ago
     }
+
+    // Save cleaned monthly orders
+    localStorage.setItem('bmb_monthly_orders', JSON.stringify(validTimestamps));
+    
+    const count = validTimestamps.length;
+    setMonthlyOrderCount(count);
+    // VIP Rule: Must order at least twice in a month
+    const isVip = count >= vipThreshold;
+    setIsVipUser(isVip);
 
     setIsLoaded(true);
   }, []);
@@ -81,11 +100,67 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [items, isLoaded]);
 
-  const joinClubMembership = () => {
-    localStorage.setItem('bmb_club_member', 'true');
-    localStorage.setItem('bmb_visit_count', '5'); // Mark as established returning patron
-    setIsClubMember(true);
-    setIsReturningCustomer(true);
+  // Check VIP status in real-time from database via phone number
+  const checkVipByPhone = useCallback(async (phone: string) => {
+    const clean = phone.replace(/\D/g, '').slice(-10);
+    if (clean.length < 10) {
+      return {
+        isVip: isVipUser,
+        monthlyOrderCount,
+        message: 'Please enter a valid 10-digit mobile number.'
+      };
+    }
+
+    try {
+      const res = await fetch(`/api/user/vip-status?phone=${clean}`);
+      if (res.ok) {
+        const data = await res.json();
+        // Take the maximum of database order count or local session orders
+        const effectiveCount = Math.max(data.monthlyOrderCount, monthlyOrderCount);
+        const vip = effectiveCount >= vipThreshold;
+        
+        setIsVipUser(vip);
+        setMonthlyOrderCount(effectiveCount);
+
+        return {
+          isVip: vip,
+          monthlyOrderCount: effectiveCount,
+          message: data.message
+        };
+      }
+    } catch (err) {
+      console.error('Failed to verify VIP status by phone', err);
+    }
+
+    return {
+      isVip: isVipUser,
+      monthlyOrderCount,
+      message: ''
+    };
+  }, [isVipUser, monthlyOrderCount]);
+
+  // Record an order placed to advance monthly count
+  const recordOrderPlaced = (orderId: string, phone?: string) => {
+    const now = Date.now();
+    const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+    
+    let history: number[] = [];
+    const saved = localStorage.getItem('bmb_monthly_orders');
+    if (saved) {
+      try {
+        history = JSON.parse(saved).filter((t: number) => t >= thirtyDaysAgo);
+      } catch (e) {}
+    }
+    
+    history.push(now);
+    localStorage.setItem('bmb_monthly_orders', JSON.stringify(history));
+    localStorage.setItem('bmb_has_ordered', 'true');
+
+    const newCount = history.length;
+    setMonthlyOrderCount(newCount);
+    if (newCount >= vipThreshold) {
+      setIsVipUser(true);
+    }
   };
 
   const addToCart = (newItem: CartItem) => {
@@ -129,7 +204,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
     if (formatted === 'SWEET50') {
       setAppliedPromoCode(formatted);
-      return { success: true, message: "₹50 Instant Discount applied!" };
+      return { success: true, message: '₹50 Instant Discount applied!' };
     }
     return { success: false, message: 'Invalid or expired coupon code. Try BIJNOR10' };
   };
@@ -141,8 +216,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
-  // 10% Discount automatically granted if Returning Customer, Club Member, or Promo Applied
-  const qualifiesFor10Percent = isReturningCustomer || isClubMember || appliedPromoCode === 'BIJNOR10' || appliedPromoCode === 'PREMIUM10' || appliedPromoCode === 'FESTIVE10';
+  // VIP Rule: 10% discount applies ONLY IF user is a VIP (>= 2 orders in month) OR applies promo code
+  const qualifiesFor10Percent = isVipUser || appliedPromoCode === 'BIJNOR10' || appliedPromoCode === 'PREMIUM10' || appliedPromoCode === 'FESTIVE10';
   
   let discountRate = qualifiesFor10Percent ? 0.10 : 0;
   let discountAmount = Math.round(subtotal * discountRate);
@@ -162,9 +237,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       clearCart,
       subtotal,
       totalItems,
-      isReturningCustomer,
-      isClubMember,
-      joinClubMembership,
+      isVipUser,
+      monthlyOrderCount,
+      vipThreshold,
+      checkVipByPhone,
+      recordOrderPlaced,
       appliedPromoCode,
       applyPromoCode,
       removePromoCode,
