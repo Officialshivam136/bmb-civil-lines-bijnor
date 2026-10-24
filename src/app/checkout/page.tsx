@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useSession } from 'next-auth/react';
 import { Truck, Store, MapPin, CheckCircle2, Crown, Tag, CreditCard, ShieldCheck, Smartphone, MessageSquare } from 'lucide-react';
+import RazorpayGatewayModal from '@/components/checkout/RazorpayGatewayModal';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -33,7 +34,13 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState({
     house: '', street: '', area: '', landmark: '', city: 'Bijnor', state: 'Uttar Pradesh', pincode: '246701'
   });
-  const [paymentMethod, setPaymentMethod] = useState('COD'); // COD or PAY_AT_PICKUP
+  const [paymentMethod, setPaymentMethod] = useState('RAZORPAY'); // Default to Razorpay Gateway
+  const [razorpayModalData, setRazorpayModalData] = useState<{
+    isOpen: boolean;
+    orderId: string;
+    orderNumber: string;
+    amount: number;
+  } | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -61,7 +68,7 @@ export default function CheckoutPage() {
       }
       if (mode === 'pickup' || mode === 'counter' || table) {
         setDeliveryMethod('PICKUP');
-        setPaymentMethod('COD');
+        setPaymentMethod('RAZORPAY');
         setIsQrOrder(true);
       }
     }
@@ -90,6 +97,35 @@ export default function CheckoutPage() {
 
   const deliveryFee = deliveryMethod === 'DELIVERY' ? 40 : 0;
   const grandTotal = finalTotal + deliveryFee;
+
+  const handleRazorpaySuccess = async (paymentDetails: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+  }) => {
+    if (!razorpayModalData) return;
+
+    try {
+      await fetch('/api/payment/razorpay/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: razorpayModalData.orderId,
+          razorpay_order_id: paymentDetails.razorpay_order_id,
+          razorpay_payment_id: paymentDetails.razorpay_payment_id,
+          razorpay_signature: paymentDetails.razorpay_signature
+        })
+      });
+
+      recordOrderPlaced(razorpayModalData.orderId, customer.phone);
+      clearCart();
+      const confirmedId = razorpayModalData.orderId;
+      setRazorpayModalData(null);
+      router.push(`/order-confirmation/${confirmedId}`);
+    } catch (err: any) {
+      setError(err?.message || 'Payment verification failed');
+    }
+  };
 
   const handlePlaceOrder = async () => {
     if (!customer.name.trim() || !customer.phone.trim()) {
@@ -128,87 +164,20 @@ export default function CheckoutPage() {
         throw new Error(data.error || 'Failed to place order');
       }
 
-      // If Razorpay online payment selected
+      // If Razorpay online payment selected -> open Razorpay Gateway Modal
       if (paymentMethod === 'RAZORPAY') {
-        try {
-          const rzpRes = await fetch('/api/payment/razorpay/create-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              amount: grandTotal,
-              orderNumber: data.orderNumber,
-              receipt: data.orderId
-            })
-          });
-
-          const rzpData = await rzpRes.json();
-
-          if ((window as any).Razorpay && !rzpData.orderId.includes('demo')) {
-            const options = {
-              key: rzpData.keyId,
-              amount: rzpData.amount,
-              currency: 'INR',
-              name: 'Bikaner Misthan Bhandar',
-              description: `Sweets & Snacks Order ${data.orderNumber}`,
-              order_id: rzpData.orderId,
-              prefill: {
-                name: customer.name,
-                contact: customer.phone,
-              },
-              theme: {
-                color: '#7A1C1C'
-              },
-              handler: async function (paymentResp: any) {
-                await fetch('/api/payment/razorpay/verify', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    orderId: data.orderId,
-                    razorpay_order_id: paymentResp.razorpay_order_id,
-                    razorpay_payment_id: paymentResp.razorpay_payment_id,
-                    razorpay_signature: paymentResp.razorpay_signature
-                  })
-                });
-
-                recordOrderPlaced(data.orderId, customer.phone);
-                clearCart();
-                router.push(`/order-confirmation/${data.orderId}`);
-              },
-              modal: {
-                ondismiss: function () {
-                  setLoading(false);
-                }
-              }
-            };
-
-            const rzp = new (window as any).Razorpay(options);
-            rzp.on('payment.failed', function (failResp: any) {
-              setError(`Payment Failed: ${failResp.error?.description || 'Transaction declined'}`);
-              setLoading(false);
-            });
-            rzp.open();
-            return;
-          } else {
-            // Demo mode simulation fallback
-            await fetch('/api/payment/razorpay/verify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                orderId: data.orderId,
-                razorpay_order_id: rzpData.orderId,
-                razorpay_payment_id: `pay_demo_${Date.now()}`,
-                razorpay_signature: 'test_demo_signature'
-              })
-            });
-          }
-        } catch (rzpErr: any) {
-          console.warn('Razorpay checkout fallback:', rzpErr);
-        }
+        setRazorpayModalData({
+          isOpen: true,
+          orderId: data.orderId,
+          orderNumber: data.orderNumber,
+          amount: grandTotal
+        });
+        setLoading(false);
+        return;
       }
 
-      // Record order in monthly history for VIP qualification (>= 2 orders a month)
+      // For Cash on Delivery / Counter
       recordOrderPlaced(data.orderId, customer.phone);
-
       clearCart();
       router.push(`/order-confirmation/${data.orderId}`);
     } catch (err: any) {
@@ -552,6 +521,23 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+
+      {/* Razorpay Gateway Modal */}
+      {razorpayModalData && (
+        <RazorpayGatewayModal
+          isOpen={razorpayModalData.isOpen}
+          onClose={() => {
+            setRazorpayModalData(null);
+            setLoading(false);
+          }}
+          orderNumber={razorpayModalData.orderNumber}
+          orderId={razorpayModalData.orderId}
+          amount={razorpayModalData.amount}
+          customerName={customer.name}
+          customerPhone={customer.phone}
+          onSuccess={handleRazorpaySuccess}
+        />
+      )}
     </div>
   );
 }

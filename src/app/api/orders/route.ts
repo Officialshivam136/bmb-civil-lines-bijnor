@@ -1,6 +1,26 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// Generate a guaranteed collision-free order number like #BMB-261024-4821
+async function generateUniqueOrderNumber(): Promise<string> {
+  const now = new Date();
+  const dateStr = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+  
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const candidate = `#BMB-${dateStr}-${randomSuffix}`;
+    const existing = await prisma.order.findUnique({
+      where: { orderNumber: candidate },
+      select: { id: true }
+    });
+    if (!existing) {
+      return candidate;
+    }
+  }
+
+  return `#BMB-${Date.now().toString().slice(-8)}`;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -8,6 +28,10 @@ export async function POST(request: Request) {
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
+    }
+
+    if (!customer?.name || !customer?.phone) {
+      return NextResponse.json({ error: 'Customer name and phone number are required' }, { status: 400 });
     }
 
     // Verify prices on server
@@ -40,9 +64,8 @@ export async function POST(request: Request) {
       });
     }
 
-    // Generate Order Number
-    const count = await prisma.order.count();
-    const orderNumber = `#BMB-${String(count + 1000).padStart(6, '0')}`;
+    // Generate Guaranteed Unique Order Number
+    const orderNumber = await generateUniqueOrderNumber();
 
     const deliveryFee = deliveryMethod === 'DELIVERY' ? 40 : 0;
     const discountVal = discount ? Number(discount) : 0;
@@ -50,25 +73,25 @@ export async function POST(request: Request) {
 
     // Create Order Transaction
     const order = await prisma.$transaction(async (tx) => {
-      // 1. Create Address if delivery
+      // 1. Create Address record to preserve customer name and WhatsApp number
       let savedAddressId = null;
-      if (deliveryMethod === 'DELIVERY') {
-        const newAddress = await tx.address.create({
-          data: {
-            userId: userId || null,
-            name: customer.name,
-            phone: customer.phone,
-            house: address.house,
-            street: address.street,
-            area: address.area,
-            landmark: address.landmark || null,
-            city: address.city || 'Bijnor',
-            state: address.state || 'Uttar Pradesh',
-            pincode: address.pincode || '246701',
-          }
-        });
-        savedAddressId = newAddress.id;
-      }
+      const isDelivery = deliveryMethod === 'DELIVERY';
+
+      const newAddress = await tx.address.create({
+        data: {
+          userId: userId || null,
+          name: customer.name.trim(),
+          phone: customer.phone.trim(),
+          house: isDelivery ? (address?.house || 'N/A') : 'Counter Takeaway',
+          street: isDelivery ? (address?.street || 'Civil Lines') : 'BMB Civil Lines Shop',
+          area: isDelivery ? (address?.area || 'Bijnor') : 'Civil Lines',
+          landmark: address?.landmark || null,
+          city: address?.city || 'Bijnor',
+          state: address?.state || 'Uttar Pradesh',
+          pincode: address?.pincode || '246701',
+        }
+      });
+      savedAddressId = newAddress.id;
 
       // 2. Create Order
       const newOrder = await tx.order.create({
@@ -88,11 +111,11 @@ export async function POST(request: Request) {
         }
       });
 
-      // 3. Create Payment
+      // 3. Create Payment record
       await tx.payment.create({
         data: {
           orderId: newOrder.id,
-          method: paymentMethod,
+          method: paymentMethod || 'COD',
           amount: total,
           status: 'PENDING'
         }
@@ -113,9 +136,9 @@ export async function POST(request: Request) {
       return newOrder;
     });
 
-    return NextResponse.json({ success: true, orderId: order.id, orderNumber: order.orderNumber });
-  } catch (error) {
+    return NextResponse.json({ success: true, orderId: order.id, orderNumber: order.orderNumber, total });
+  } catch (error: any) {
     console.error('Error creating order:', error);
-    return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to create order' }, { status: 500 });
   }
 }
