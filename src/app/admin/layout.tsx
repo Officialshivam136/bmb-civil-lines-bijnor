@@ -92,7 +92,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-bold text-foreground">{admin?.name || 'Authorized Admin'}</p>
-              <p className="text-[10px] text-foreground/50">{admin?.email || 'admin@bmb.com'}</p>
+              <p className="text-[10px] text-foreground/50">{admin?.email ? admin.email : 'BMB Civil Lines'}</p>
             </div>
             <form action="/api/admin/auth" method="DELETE">
               <a

@@ -70,7 +70,7 @@ export default function AdminLoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@bmb.com"
+                placeholder="admin@yourdomain.com"
                 className="w-full pl-10 pr-4 py-3 bg-surface border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none"
                 required
               />
@@ -79,7 +79,7 @@ export default function AdminLoginPage() {
 
           <div>
             <label className="block text-xs font-semibold text-foreground/80 mb-1.5">
-              Admin Master Password
+              Admin Password
             </label>
             <div className="relative">
               <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-foreground/40" />
@@ -97,17 +97,12 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md transform hover:-translate-y-0.5 disabled:opacity-50 text-sm"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md transform hover:-translate-y-0.5 disabled:opacity-50 text-sm cursor-pointer"
           >
             {loading ? 'Verifying Credentials...' : 'Sign In to Admin Dashboard'}
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
-
-        <div className="bg-surface border border-border p-3.5 rounded-xl text-center text-xs text-foreground/60 space-y-1">
-          <p className="font-semibold text-foreground/80">Default Administrative Credentials:</p>
-          <p className="font-mono text-[11px] text-primary">admin@bmb.com / BmbBijnor@2026</p>
-        </div>
       </div>
     </div>
   );
