@@ -83,10 +83,10 @@ export default function Footer() {
 
       <div className="container mx-auto px-4 mt-10 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between text-xs text-foreground/60 gap-4">
         <div>
-          &copy; {new Date().getFullYear()} BMB — Bikaner Misthan Bhandar, Civil Lines, Bijnor. All rights reserved.
+          &copy; {new Date().getFullYear()} Bikaner Misthan Bhandar, Established 1995. Civil Lines, Bijnor. All rights reserved.
         </div>
         <div className="flex gap-4">
-          <span>Pure Desi Ghee Sweetmaker</span>
+          <span>Pure Desi Ghee Sweetmaker Since 1995</span>
           <span>•</span>
           <span>Bijnor, U.P.</span>
         </div>

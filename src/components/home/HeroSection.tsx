@@ -154,12 +154,12 @@ export default function HeroSection({ shopName }: HeroSectionProps) {
           
           {/* Left Column: High-Appeal Copy & Interactive Pills */}
           <div className="lg:col-span-7 space-y-6 text-left">
-            {/* Live Kitchen Badge */}
+            {/* Live Heritage Badge */}
             <div className="inline-flex items-center gap-2.5 bg-amber-500/15 border border-amber-400/30 text-amber-200 px-3.5 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md shadow-xs animate-in fade-in duration-300">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
-              <span className="font-bold text-amber-300">Fresh Batches Ready</span>
+              <span className="font-extrabold text-amber-300">Established 1995</span>
               <span>•</span>
-              <span className="text-white/80">Civil Lines Outlet, Bijnor</span>
+              <span className="text-white/90">Bikaner Misthan Bhandar, Civil Lines</span>
             </div>
 
             {/* Main Headline */}
@@ -172,7 +172,7 @@ export default function HeroSection({ shopName }: HeroSectionProps) {
 
             {/* Sub-paragraph */}
             <p className="text-sm sm:text-base lg:text-lg text-white/85 max-w-xl font-normal leading-relaxed">
-              Serving Bijnor with authentic, slow-cooked traditional sweets, hot samosas &amp; celebration gift boxes crafted exclusively in 100% pure country ghee.
+              Serving Bijnor since 1995 with authentic, slow-cooked traditional sweets, hot samosas &amp; celebration gift boxes crafted exclusively in 100% pure country ghee.
             </p>
 
             {/* Interactive Sweet Craving Pills (Switch hero treat directly) */}

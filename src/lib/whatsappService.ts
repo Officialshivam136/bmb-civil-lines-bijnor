@@ -67,7 +67,7 @@ export function formatAdminOrderNotification(order: OrderNotificationData): stri
 
   const adminOrderUrl = `https://bmb-civil-lines-bijnor.vercel.app/admin/orders/${order.orderId}`;
 
-  return `🚨 *NEW BMB ORDER RECEIVED!* 🚨
+  return `🚨 *NEW ORDER — BIKANER MISTHAN BHANDAR (Established 1995)* 🚨
 ━━━━━━━━━━━━━━━━━━━━
 📋 *Order ID:* *${order.orderNumber}*
 🕒 *Time:* ${dateFormatted}

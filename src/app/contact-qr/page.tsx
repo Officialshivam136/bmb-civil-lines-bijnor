@@ -50,7 +50,7 @@ export default function ContactQRPage() {
 
         <div className="relative z-10 mb-2">
           <span className="text-[10px] font-black uppercase tracking-widest text-[#7A1C1C] bg-amber-50 px-3 py-1 rounded-full border border-[#C5A059]/40">
-            Civil Lines • Bijnor (U.P.)
+            Civil Lines • Bijnor (U.P.) • Established 1995
           </span>
         </div>
 

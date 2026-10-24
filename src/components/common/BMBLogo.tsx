@@ -179,7 +179,7 @@ export default function BMBLogo({ className = '', size = 'md', showSubtitle = tr
             >
               <span>Civil Lines, Bijnor</span>
               <span>•</span>
-              <span className="text-[#8c1824] font-black">Estd. 100% Desi Ghee</span>
+              <span className="text-[#8c1824] font-black">Established 1995</span>
             </span>
           </div>
         </div>

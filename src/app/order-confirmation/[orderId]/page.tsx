@@ -124,7 +124,7 @@ export default async function OrderConfirmationPage(props: { params: Promise<{ o
           <div>
             <BMBLogo size="md" />
             <div className="text-[11px] text-foreground/70 mt-2 space-y-0.5">
-              <p className="font-bold text-foreground">BIKANER MISTHAN BHANDAR</p>
+              <p className="font-bold text-foreground">BIKANER MISTHAN BHANDAR (Established 1995)</p>
               <p>1101, Civil Lines, Opposite Classic Bar, Bijnor (U.P.) 246701</p>
               <p>FSSAI Lic No: 12721008000123 • GSTIN: 09ADQPG2917D1ZL</p>
               <p>Helpline / WhatsApp: +91 89791 64646</p>

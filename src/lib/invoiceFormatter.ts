@@ -45,7 +45,7 @@ export function formatWhatsAppInvoice(order: InvoiceOrderData): string {
   const trackingLink = `https://bmb-civil-lines-bijnor.vercel.app/track-order/${encodeURIComponent(order.orderNumber)}`;
 
   return `🧾 *TAX INVOICE & ORDER RECEIPT*
-*BIKANER MISTHAN BHANDAR (BMB)*
+*BIKANER MISTHAN BHANDAR (Established 1995)*
 _1101, Civil Lines, Opposite Classic Bar, Bijnor (U.P.) 246701_
 📞 *Orders & Helpline:* +91 89791 64646
 ━━━━━━━━━━━━━━━━━━━━
