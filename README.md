@@ -23,11 +23,10 @@
 
 ### 3. 👑 Customer Loyalty & 10% VIP Returning Patron Engine
 - Automatically detects returning customers and applies **10% BMB Elite Club VIP discount** on cart totals.
-- Live coupon code validation engine (`BIJNOR10`, `SWEET50`, `PREMIUM10`).
+- Live coupon code validation engine ().
 
 ### 4. 🛡️ Password-Protected Kitchen Admin Panel
 - **URL:** `/admin/login`
-- **Credentials:** `admin@bmb.com` / `BmbBijnor@2026`
 - **Capabilities:** Live revenue metrics, real-time incoming orders list, order status dispatch (`CONFIRMED` ➔ `PREPARING` ➔ `READY_FOR_PICKUP` ➔ `DELIVERED`), and sweet catalog editor.
 
 ### 5. 📱 Android APK Native App
