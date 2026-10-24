@@ -29,3 +29,159 @@ body {
   font-family: var(--font-sans), Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+/* ========================================================
+   ADMIN PORTAL THEME ENGINE: DARK & LIGHT MODE
+   ======================================================== */
+.admin-theme-dark {
+  --admin-card-bg: #18181b;
+  --admin-card-inner: #242429;
+  --admin-border: #27272a;
+  --admin-header-bg: #161619;
+  --admin-text-main: #ffffff;
+  --admin-text-sub: #a1a1aa;
+}
+
+.admin-theme-light {
+  --admin-card-bg: #ffffff;
+  --admin-card-inner: #fdfbf7;
+  --admin-border: #e6dfd3;
+  --admin-header-bg: #ffffff;
+  --admin-text-main: #1c1917;
+  --admin-text-sub: #57534e;
+}
+
+/* Light Mode Overrides for Admin Workspace */
+.admin-theme-light .bg-\[\#18181b\] {
+  background-color: #ffffff !important;
+  border-color: #e6dfd3 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.admin-theme-light .bg-\[\#242429\] {
+  background-color: #f7f4ed !important;
+  border-color: #e5decfa0 !important;
+}
+
+.admin-theme-light .hover\:bg-\[\#2b2b32\]:hover {
+  background-color: #efe8dc !important;
+}
+
+.admin-theme-light .hover\:bg-\[\#2e2e34\]:hover {
+  background-color: #efe8dc !important;
+}
+
+.admin-theme-light .bg-\[\#161619\] {
+  background-color: #ffffff !important;
+  border-color: #e6dfd3 !important;
+}
+
+.admin-theme-light .bg-\[\#111113\] {
+  background-color: #f8f6f0 !important;
+}
+
+.admin-theme-light .text-white {
+  color: #1c1917 !important;
+}
+
+.admin-theme-light .text-neutral-100 {
+  color: #1c1917 !important;
+}
+
+.admin-theme-light .text-neutral-200 {
+  color: #292524 !important;
+}
+
+.admin-theme-light .text-neutral-300 {
+  color: #44403c !important;
+}
+
+.admin-theme-light .text-neutral-400 {
+  color: #78716c !important;
+}
+
+.admin-theme-light .border-neutral-800 {
+  border-color: #e6dfd3 !important;
+}
+
+.admin-theme-light .border-neutral-700 {
+  border-color: #d6cdc0 !important;
+}
+
+/* Preserve Rich Royal Ruby Velvet Branding on Sidebar */
+.admin-theme-light aside {
+  background: linear-gradient(to bottom, #73131e, #5a0e17, #3d080e) !important;
+  border-right-color: #8c1824 !important;
+}
+
+.admin-theme-light aside .text-white {
+  color: #ffffff !important;
+}
+
+.admin-theme-light aside .text-neutral-300 {
+  color: #fde8eb !important;
+}
+
+.admin-theme-light aside .text-amber-200\/50 {
+  color: #fde68a !important;
+  opacity: 0.8 !important;
+}
+
+.admin-theme-light aside .hover\:bg-white\/5:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Button & Badge Contrast In Light Mode */
+.admin-theme-light button.bg-neutral-800,
+.admin-theme-light div.bg-neutral-800 {
+  background-color: #ede7dc !important;
+  color: #1c1917 !important;
+  border-color: #d6cdc0 !important;
+}
+
+.admin-theme-light .bg-\[\#1c1c20\] {
+  background-color: #ffffff !important;
+  border-color: #e6dfd3 !important;
+}
+
+.admin-theme-light .bg-neutral-900 {
+  background-color: #f5f0e6 !important;
+  color: #1c1917 !important;
+  border-color: #d6cdc0 !important;
+}
+
+.admin-theme-light .bg-neutral-950 {
+  background-color: #ede7dc !important;
+  color: #1c1917 !important;
+}
+
+.admin-theme-light .divide-neutral-800 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #e6dfd3 !important;
+}
+
+.admin-theme-light .divide-neutral-700 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #d6cdc0 !important;
+}
+
+.admin-theme-light .bg-neutral-800\/60,
+.admin-theme-light .bg-neutral-800\/50,
+.admin-theme-light .bg-neutral-800\/40 {
+  background-color: #f7f4ed !important;
+}
+
+.admin-theme-light tr.hover\:bg-neutral-800\/40:hover,
+.admin-theme-light tr.hover\:bg-neutral-800\/30:hover {
+  background-color: #f2eee4 !important;
+}
+
+.admin-theme-light svg text {
+  fill: #78716c !important;
+}
+
+.admin-theme-light input.bg-\[\#242429\],
+.admin-theme-light textarea.bg-\[\#242429\] {
+  background-color: #ffffff !important;
+  border-color: #d6cdc0 !important;
+  color: #1c1917 !important;
+}
+
