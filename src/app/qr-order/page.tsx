@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Store, Truck, UtensilsCrossed, Smartphone, Phone, Sparkles, ArrowRight, CheckCircle2 } from 'lucide-react';
 import BMBLogo from '@/components/common/BMBLogo';
 
-export default function QROrderLandingPage() {
+function QROrderContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [tableNumber, setTableNumber] = useState<string>('');
@@ -163,3 +163,12 @@ export default function QROrderLandingPage() {
     </div>
   );
 }
+
+export default function QROrderLandingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-xs text-foreground/60">Loading counter...</div>}>
+      <QROrderContent />
+    </Suspense>
+  );
+}
+

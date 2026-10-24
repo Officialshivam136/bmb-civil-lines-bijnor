@@ -32,6 +32,7 @@ interface Product {
   variants: Variant[];
   images?: ProductImage[];
   category?: {
+    id?: string;
     name: string;
     slug: string;
   };
