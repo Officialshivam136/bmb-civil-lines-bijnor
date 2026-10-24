@@ -44,6 +44,7 @@ android/local.properties
 # SQLite databases
 *.db
 *.db-journal
+!prisma/dev.db
 
 # typescript & vercel
 .vercel
