@@ -58,6 +58,7 @@ export default function Footer() {
             <li><Link href="/" className="text-foreground/80 hover:text-primary transition-colors">Home Storefront</Link></li>
             <li><Link href="/menu" className="text-foreground/80 hover:text-primary transition-colors">Complete Menu</Link></li>
             <li><Link href="/cart" className="text-foreground/80 hover:text-primary transition-colors">Shopping Cart</Link></li>
+            <li><Link href="/contact-qr" className="text-primary font-bold hover:underline flex items-center gap-1">📱 Shop Contact QR (Guest Order)</Link></li>
             <li><Link href="/track-order" className="text-foreground/80 hover:text-primary transition-colors">Live Order Tracking</Link></li>
             <li><Link href="/qr-order" className="text-foreground/80 hover:text-primary transition-colors">⚡ Counter QR & Dine-in</Link></li>
             <li><Link href="/account" className="text-foreground/80 hover:text-primary transition-colors">Patron Account</Link></li>

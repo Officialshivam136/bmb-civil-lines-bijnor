@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useSession } from 'next-auth/react';
-import { Truck, Store, MapPin, CheckCircle2, Crown, Tag } from 'lucide-react';
+import { Truck, Store, MapPin, CheckCircle2, Crown, Tag, CreditCard, ShieldCheck, Smartphone, MessageSquare } from 'lucide-react';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -75,12 +75,25 @@ export default function CheckoutPage() {
     }
   }, [customer.phone, checkVipByPhone]);
 
+  // Dynamically load Razorpay SDK
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      try {
+        document.body.removeChild(script);
+      } catch (e) {}
+    };
+  }, []);
+
   const deliveryFee = deliveryMethod === 'DELIVERY' ? 40 : 0;
   const grandTotal = finalTotal + deliveryFee;
 
   const handlePlaceOrder = async () => {
     if (!customer.name.trim() || !customer.phone.trim()) {
-      setError('Please provide your name and phone number for delivery updates.');
+      setError('Please provide your name and WhatsApp phone number for your invoice.');
       return;
     }
 
@@ -115,6 +128,84 @@ export default function CheckoutPage() {
         throw new Error(data.error || 'Failed to place order');
       }
 
+      // If Razorpay online payment selected
+      if (paymentMethod === 'RAZORPAY') {
+        try {
+          const rzpRes = await fetch('/api/payment/razorpay/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              amount: grandTotal,
+              orderNumber: data.orderNumber,
+              receipt: data.orderId
+            })
+          });
+
+          const rzpData = await rzpRes.json();
+
+          if ((window as any).Razorpay && !rzpData.orderId.includes('demo')) {
+            const options = {
+              key: rzpData.keyId,
+              amount: rzpData.amount,
+              currency: 'INR',
+              name: 'Bikaner Misthan Bhandar',
+              description: `Sweets & Snacks Order ${data.orderNumber}`,
+              order_id: rzpData.orderId,
+              prefill: {
+                name: customer.name,
+                contact: customer.phone,
+              },
+              theme: {
+                color: '#7A1C1C'
+              },
+              handler: async function (paymentResp: any) {
+                await fetch('/api/payment/razorpay/verify', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    orderId: data.orderId,
+                    razorpay_order_id: paymentResp.razorpay_order_id,
+                    razorpay_payment_id: paymentResp.razorpay_payment_id,
+                    razorpay_signature: paymentResp.razorpay_signature
+                  })
+                });
+
+                recordOrderPlaced(data.orderId, customer.phone);
+                clearCart();
+                router.push(`/order-confirmation/${data.orderId}`);
+              },
+              modal: {
+                ondismiss: function () {
+                  setLoading(false);
+                }
+              }
+            };
+
+            const rzp = new (window as any).Razorpay(options);
+            rzp.on('payment.failed', function (failResp: any) {
+              setError(`Payment Failed: ${failResp.error?.description || 'Transaction declined'}`);
+              setLoading(false);
+            });
+            rzp.open();
+            return;
+          } else {
+            // Demo mode simulation fallback
+            await fetch('/api/payment/razorpay/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                orderId: data.orderId,
+                razorpay_order_id: rzpData.orderId,
+                razorpay_payment_id: `pay_demo_${Date.now()}`,
+                razorpay_signature: 'test_demo_signature'
+              })
+            });
+          }
+        } catch (rzpErr: any) {
+          console.warn('Razorpay checkout fallback:', rzpErr);
+        }
+      }
+
       // Record order in monthly history for VIP qualification (>= 2 orders a month)
       recordOrderPlaced(data.orderId, customer.phone);
 
@@ -140,6 +231,21 @@ export default function CheckoutPage() {
             {error}
           </div>
         )}
+
+        {/* Instant WhatsApp Invoice & Guest Ordering Notice */}
+        <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-950 rounded-2xl p-4 mb-6 flex items-start gap-3.5 text-xs md:text-sm shadow-xs">
+          <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <MessageSquare className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="font-extrabold text-sm text-foreground block">
+              ⚡ Guest Ordering Active — No Login or Signup Needed!
+            </span>
+            <p className="text-foreground/75 text-xs mt-0.5 leading-relaxed">
+              Simply enter your name and WhatsApp number below. Once placed, your <strong>Official Tax Invoice & Order Pickup Token</strong> will be delivered directly to your WhatsApp.
+            </p>
+          </div>
+        </div>
 
         {isQrOrder && (
           <div className="bg-amber-500/10 border border-accent text-accent-foreground px-4 py-3 rounded-2xl mb-6 flex items-center gap-3 text-sm font-semibold">
@@ -314,24 +420,65 @@ export default function CheckoutPage() {
             {/* Payment Method */}
             <div className="bg-surface border border-border p-6 rounded-2xl shadow-sm space-y-4">
               <h2 className="text-base font-bold text-foreground">
-                {deliveryMethod === 'DELIVERY' ? '4. Payment Preference' : '3. Payment Preference'}
+                {deliveryMethod === 'DELIVERY' ? '4. Choose Payment Method' : '3. Choose Payment Method'}
               </h2>
               <div className="space-y-3">
-                <label className="flex items-center gap-3 p-4 rounded-xl border border-primary bg-primary/5 cursor-pointer">
+                {/* Razorpay Online Payment Option */}
+                <label className={`flex items-start gap-3.5 p-4 rounded-xl border transition-all cursor-pointer ${
+                  paymentMethod === 'RAZORPAY'
+                    ? 'border-primary bg-primary/5 text-primary shadow-xs'
+                    : 'border-border bg-background text-foreground hover:border-primary/40'
+                }`}>
+                  <input
+                    type="radio"
+                    name="payment"
+                    value="RAZORPAY"
+                    checked={paymentMethod === 'RAZORPAY'}
+                    onChange={() => setPaymentMethod('RAZORPAY')}
+                    className="accent-primary w-4 h-4 mt-1"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-primary" />
+                      <span className="font-extrabold text-sm text-foreground">
+                        Pay Online via Razorpay / UPI
+                      </span>
+                      <span className="bg-emerald-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+                        Instant WhatsApp Invoice
+                      </span>
+                    </div>
+                    <p className="text-xs text-foreground/70 mt-1">
+                      Supports Google Pay, PhonePe, Paytm, BHIM UPI, Debit/Credit Cards & Netbanking.
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-2 text-[11px] text-emerald-700 font-semibold">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>100% Safe RBI-Compliant Razorpay Gateway</span>
+                    </div>
+                  </div>
+                </label>
+
+                {/* Cash on Delivery / Pay at Counter */}
+                <label className={`flex items-start gap-3.5 p-4 rounded-xl border transition-all cursor-pointer ${
+                  paymentMethod === 'COD'
+                    ? 'border-primary bg-primary/5 text-primary shadow-xs'
+                    : 'border-border bg-background text-foreground hover:border-primary/40'
+                }`}>
                   <input
                     type="radio"
                     name="payment"
                     value="COD"
                     checked={paymentMethod === 'COD'}
                     onChange={() => setPaymentMethod('COD')}
-                    className="accent-primary w-4 h-4"
+                    className="accent-primary w-4 h-4 mt-1"
                   />
                   <div>
-                    <span className="font-bold text-sm block text-foreground">
+                    <span className="font-extrabold text-sm block text-foreground">
                       {deliveryMethod === 'DELIVERY' ? 'Cash on Delivery (COD) / UPI at Doorstep' : 'Pay at Counter (Cash / UPI / Card)'}
                     </span>
-                    <span className="text-xs text-foreground/60">
-                      Pay easily when your freshly prepared order reaches you.
+                    <span className="text-xs text-foreground/60 mt-0.5 block">
+                      {deliveryMethod === 'DELIVERY'
+                        ? 'Pay directly to our delivery boy when your freshly packed sweets reach your address.'
+                        : 'Pay directly at the Civil Lines sweets billing counter when picking up your box.'}
                     </span>
                   </div>
                 </label>
@@ -386,9 +533,13 @@ export default function CheckoutPage() {
                 type="button"
                 onClick={handlePlaceOrder}
                 disabled={loading}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md transform hover:-translate-y-0.5 disabled:opacity-50"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-black py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md transform hover:-translate-y-0.5 disabled:opacity-50 cursor-pointer"
               >
-                {loading ? 'Confirming Order...' : `PLACE ORDER (₹${grandTotal})`}
+                {loading
+                  ? 'Processing Order...'
+                  : paymentMethod === 'RAZORPAY'
+                    ? `PAY ₹${grandTotal} VIA RAZORPAY / UPI`
+                    : `CONFIRM ORDER (₹${grandTotal})`}
               </button>
 
               <div className="text-[11px] text-center text-foreground/60 space-y-1">

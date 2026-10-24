@@ -42,12 +42,12 @@ export default function Header() {
           </button>
           
           <Link 
-            href="/qr-order" 
-            className="hidden sm:flex flex-col items-center gap-0.5 text-foreground hover:text-primary transition-colors"
-            title="Scan & Order at Counter"
+            href="/contact-qr" 
+            className="hidden sm:flex flex-col items-center gap-0.5 text-primary hover:text-primary/80 transition-colors"
+            title="Shop Contact QR — Scan & Order Without Login"
           >
-            <QrCode className="w-5 h-5 text-accent-foreground" />
-            <span className="text-[11px] font-semibold">Counter QR</span>
+            <QrCode className="w-5 h-5 text-primary" />
+            <span className="text-[11px] font-bold">Contact QR</span>
           </Link>
 
           <Link href="/account" className="hidden md:flex flex-col items-center gap-0.5 text-foreground hover:text-primary transition-colors">
