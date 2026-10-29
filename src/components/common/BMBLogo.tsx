@@ -7,9 +7,15 @@ interface LogoProps {
   className?: string;
   size?: 'sm' | 'md' | 'lg';
   showSubtitle?: boolean;
+  forceLight?: boolean;
 }
 
-export default function BMBLogo({ className = '', size = 'md', showSubtitle = true }: LogoProps) {
+export default function BMBLogo({
+  className = '',
+  size = 'md',
+  showSubtitle = true,
+  forceLight = false
+}: LogoProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
@@ -49,7 +55,7 @@ export default function BMBLogo({ className = '', size = 'md', showSubtitle = tr
       box: 'w-16 h-16',
       crown: 'w-5 h-5',
       bmbText: 'text-xl font-black',
-      title: 'text-2xl sm:text-3xl font-black',
+      title: 'text-xl sm:text-2xl font-black',
       sub: 'text-xs',
       sparkle: 'w-4 h-4'
     },
@@ -88,8 +94,9 @@ export default function BMBLogo({ className = '', size = 'md', showSubtitle = tr
 
         {/* Outer 3D Beveled Golden Rim */}
         <div
-          className="relative w-full h-full rounded-2xl p-[2.5px] shadow-2xl transition-all duration-300 overflow-hidden"
+          className="relative w-full h-full rounded-2xl p-[2.5px] shadow-2xl transition-all duration-300 overflow-hidden bg-[#B78103]"
           style={{
+            backgroundColor: '#B78103',
             background: 'linear-gradient(135deg, #FFE082 0%, #FFB300 30%, #B78103 60%, #FFF9C4 85%, #6D4C41 100%)',
             boxShadow: isHovered
               ? '0 12px 28px -4px rgba(183, 129, 3, 0.6), 0 4px 10px rgba(0,0,0,0.3), inset 0 2px 2px rgba(255,255,255,0.9), inset 0 -2px 3px rgba(0,0,0,0.5)'
@@ -98,8 +105,9 @@ export default function BMBLogo({ className = '', size = 'md', showSubtitle = tr
         >
           {/* Inner Deep Royal Ruby Core */}
           <div
-            className="w-full h-full rounded-[13px] flex flex-col items-center justify-center relative overflow-hidden"
+            className="w-full h-full rounded-[13px] flex flex-col items-center justify-center relative overflow-hidden bg-[#700f19]"
             style={{
+              backgroundColor: '#700f19',
               background: 'radial-gradient(circle at 35% 30%, #9b1c28 0%, #700f19 50%, #3e070c 100%)',
               border: '1px solid rgba(255, 224, 130, 0.4)',
             }}
@@ -166,7 +174,12 @@ export default function BMBLogo({ className = '', size = 'md', showSubtitle = tr
         <div className="flex flex-col text-left leading-tight">
           <div className="flex items-center gap-1.5">
             <span
-              className={`${currentSize.title} tracking-tight bg-gradient-to-r from-[#700f19] via-[#8c1824] to-[#a81928] bg-clip-text text-transparent group-hover:from-[#9b1c28] group-hover:to-[#b71c1c] transition-all drop-shadow-xs font-serif`}
+              className={`${currentSize.title} tracking-tight font-serif transition-colors font-black ${
+                forceLight
+                  ? 'text-[#700f19] hover:text-[#8c1824]'
+                  : 'text-[#700f19] dark:text-[#F59E0B] hover:text-[#8c1824] dark:hover:text-[#FBBF24]'
+              }`}
+              style={forceLight ? { color: '#700f19', WebkitTextFillColor: '#700f19' } : undefined}
             >
               Bikaner Misthan Bhandar
             </span>
@@ -175,11 +188,25 @@ export default function BMBLogo({ className = '', size = 'md', showSubtitle = tr
 
           <div className="flex items-center gap-1.5 mt-0.5">
             <span
-              className={`${currentSize.sub} font-bold uppercase tracking-widest text-[#B78103] group-hover:text-amber-700 transition-colors flex items-center gap-1`}
+              className={`${currentSize.sub} font-bold uppercase tracking-widest transition-colors flex items-center gap-1 ${
+                forceLight
+                  ? 'text-[#B78103] hover:text-amber-700'
+                  : 'text-[#B78103] dark:text-amber-300 hover:text-amber-700 dark:hover:text-amber-200'
+              }`}
+              style={forceLight ? { color: '#B78103', WebkitTextFillColor: '#B78103' } : undefined}
             >
               <span>Civil Lines, Bijnor</span>
               <span>•</span>
-              <span className="text-[#8c1824] font-black">Established 1995</span>
+              <span
+                className={`font-black ${
+                  forceLight
+                    ? 'text-[#700f19]'
+                    : 'text-[#700f19] dark:text-amber-400'
+                }`}
+                style={forceLight ? { color: '#700f19', WebkitTextFillColor: '#700f19' } : undefined}
+              >
+                Established 1995
+              </span>
             </span>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { createAdminToken, verifyAdminToken } from '@/lib/adminAuth';
 
 const DEFAULT_ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'admin@bmb.com').toLowerCase().trim();
 const DEFAULT_ADMIN_PASS = process.env.ADMIN_PASSWORD || 'BmbBijnor@2026';
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
     }
 
     const inputEmail = email.toLowerCase().trim();
-    let authenticatedAdmin = null;
+    let authenticatedAdmin: { id: string; name: string; email: string; role: string } | null = null;
 
     // 1. Try database verification
     try {
@@ -61,9 +62,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid admin credentials' }, { status: 401 });
     }
 
-    // Set secure HTTP-only admin session cookie
+    // Create cryptographically signed HMAC admin token
+    const signedSessionToken = await createAdminToken(
+      authenticatedAdmin.id,
+      authenticatedAdmin.role
+    );
+
+    // Set secure HTTP-only admin session cookie with the signed token
     const cookieStore = await cookies();
-    cookieStore.set('bmb_admin_auth', authenticatedAdmin.id, {
+    cookieStore.set('bmb_admin_auth', signedSessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -90,7 +97,10 @@ export async function DELETE() {
 export async function GET() {
   const cookieStore = await cookies();
   const session = cookieStore.get('bmb_admin_auth');
+  const verification = await verifyAdminToken(session?.value);
   return NextResponse.json({
-    authenticated: Boolean(session?.value)
+    authenticated: verification.valid,
+    adminId: verification.adminId || null
   });
 }
+

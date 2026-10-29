@@ -7,12 +7,15 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     const params = await props.params;
     const body = await request.json();
     const { status } = body;
+    const ALLOWED_STATUSES = ['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'];
 
-    if (!status) {
-      return NextResponse.json({ error: 'Status is required' }, { status: 400 });
+    if (!status || !ALLOWED_STATUSES.includes(status)) {
+      return NextResponse.json({ 
+        error: `Invalid status. Allowed values: ${ALLOWED_STATUSES.join(', ')}` 
+      }, { status: 400 });
     }
 
-    const res = await updateOrderStatus(params.id, status);
+    const res = await updateOrderStatus(params.id, status as any);
 
     revalidatePath('/admin');
     revalidatePath('/admin/orders');

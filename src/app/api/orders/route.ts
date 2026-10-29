@@ -27,21 +27,31 @@ async function generateUniqueOrderNumber(): Promise<string> {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { items, customer, deliveryMethod, address, paymentMethod, subtotal, discount, userId } = body;
+    const { items, customer, deliveryMethod, address, paymentMethod, userId } = body;
 
-    if (!items || items.length === 0) {
+    if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
     }
 
-    if (!customer?.name || !customer?.phone) {
+    if (!customer?.name?.trim() || !customer?.phone?.trim()) {
       return NextResponse.json({ error: 'Customer name and phone number are required' }, { status: 400 });
     }
 
-    // Verify prices on server
+    const cleanPhone = customer.phone.replace(/\D/g, '').slice(-10);
+    if (cleanPhone.length !== 10) {
+      return NextResponse.json({ error: 'Please provide a valid 10-digit mobile number' }, { status: 400 });
+    }
+
+    // Verify prices and strictly validate quantities on server
     let serverSubtotal = 0;
     const orderItemsData: any[] = [];
     
     for (const item of items) {
+      const quantity = Math.floor(Number(item.quantity));
+      if (!Number.isInteger(quantity) || quantity <= 0 || quantity > 100) {
+        return NextResponse.json({ error: `Invalid quantity for delicacy: ${item.name || 'item'}` }, { status: 400 });
+      }
+
       const variant = await prisma.productVariant.findUnique({
         where: { id: item.variantId },
         include: { product: true }
@@ -51,31 +61,76 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: `Variant not found: ${item.name}` }, { status: 400 });
       }
       
-      if (variant.stock < item.quantity) {
+      if (variant.stock < quantity) {
         return NextResponse.json({ error: `Not enough stock for ${item.name}` }, { status: 400 });
       }
 
-      serverSubtotal += variant.price * item.quantity;
+      serverSubtotal += variant.price * quantity;
       
       orderItemsData.push({
         variantId: variant.id,
         productName: variant.product.name,
         variantName: variant.weight,
         price: variant.price,
-        quantity: item.quantity,
-        total: variant.price * item.quantity
+        quantity,
+        total: variant.price * quantity
       });
+    }
+
+    // Server-side Discount Computation (Prevent client price tampering)
+    let serverVerifiedDiscount = 0;
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    try {
+      const pastOrdersCount = await prisma.order.count({
+        where: {
+          createdAt: { gte: thirtyDaysAgo },
+          status: { not: 'CANCELLED' },
+          OR: [
+            ...(userId ? [{ userId }] : []),
+            { address: { phone: { contains: cleanPhone } } }
+          ]
+        }
+      });
+
+      // VIP Patron: >= 2 orders in last 30 days -> Flat 10% OFF
+      if (pastOrdersCount >= 2) {
+        serverVerifiedDiscount = Math.round(serverSubtotal * 0.10);
+      } else if (body.couponCode && typeof body.couponCode === 'string') {
+        const coupon = await prisma.coupon.findUnique({
+          where: { code: body.couponCode.trim().toUpperCase() }
+        });
+
+        if (coupon && coupon.isActive) {
+          const now = new Date();
+          const isExpired = (coupon.startDate && coupon.startDate > now) || (coupon.endDate && coupon.endDate < now);
+          const meetsMin = serverSubtotal >= coupon.minOrderValue;
+
+          if (!isExpired && meetsMin) {
+            if (coupon.type === 'PERCENTAGE') {
+              let disc = (serverSubtotal * coupon.value) / 100;
+              if (coupon.maxDiscount) disc = Math.min(disc, coupon.maxDiscount);
+              serverVerifiedDiscount = Math.round(disc);
+            } else {
+              serverVerifiedDiscount = Math.min(coupon.value, serverSubtotal);
+            }
+          }
+        }
+      }
+    } catch (discErr) {
+      console.warn('[api/orders] Discount validation fallback:', discErr);
     }
 
     // Generate Guaranteed Unique Order Number
     const orderNumber = await generateUniqueOrderNumber();
 
     const deliveryFee = deliveryMethod === 'DELIVERY' ? 40 : 0;
-    const discountVal = discount ? Number(discount) : 0;
+    const discountVal = serverVerifiedDiscount;
     const total = Math.max(0, serverSubtotal - discountVal + deliveryFee);
 
     // Create Order Transaction
     const order = await prisma.$transaction(async (tx) => {
+
       // 1. Create Address record to preserve customer name and WhatsApp number
       let savedAddressId = null;
       const isDelivery = deliveryMethod === 'DELIVERY';

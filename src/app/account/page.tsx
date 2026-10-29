@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
+import ThemeToggle from '@/components/layout/ThemeToggle';
+
 export default async function AccountPage() {
   const session = await getServerSession(authOptions);
 
@@ -29,8 +31,8 @@ export default async function AccountPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1">
-          <div className="bg-surface border border-border p-6 rounded-2xl sticky top-24">
+        <div className="lg:col-span-1 space-y-6">
+          <div className="bg-surface border border-border p-6 rounded-2xl">
             <h2 className="text-lg font-bold text-foreground mb-4">Profile</h2>
             <div className="space-y-4 text-sm text-foreground/80">
               <div>
@@ -42,6 +44,14 @@ export default async function AccountPage() {
                 <p className="font-bold text-foreground">{(session.user as any).phone}</p>
               </div>
             </div>
+          </div>
+
+          <div className="bg-surface border border-border p-6 rounded-2xl">
+            <h2 className="text-lg font-bold text-foreground mb-1">Appearance &amp; Theme</h2>
+            <p className="text-xs text-foreground/60 mb-4">
+              Configure your storefront visual theme preference:
+            </p>
+            <ThemeToggle variant="card" />
           </div>
         </div>
 

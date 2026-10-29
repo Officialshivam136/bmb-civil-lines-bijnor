@@ -32,20 +32,20 @@ export default function ContactQRPage() {
         <span>Official Store Contact & Instant Order QR</span>
       </div>
 
-      <h1 className="text-2xl sm:text-3xl font-black text-foreground mb-2">
+      <h1 className="text-2xl sm:text-3xl font-black text-[#2d1810] dark:text-amber-400 mb-2">
         Bikaner Misthan Bhandar — Contact QR
       </h1>
-      <p className="text-xs sm:text-sm text-foreground/70 max-w-lg mx-auto mb-8 leading-relaxed">
+      <p className="text-xs sm:text-sm text-[#5c4a43] dark:text-neutral-300 max-w-lg mx-auto mb-8 leading-relaxed font-medium">
         Scan this QR code with any smartphone camera, Google Lens, Paytm, or PhonePe to browse our sweets, order without login, pay via Razorpay / UPI, and receive an instant tax invoice on your WhatsApp.
       </p>
 
       {/* Printable Royal QR Stand Frame */}
-      <div className="bg-white border-4 border-[#7A1C1C] rounded-3xl p-6 sm:p-8 shadow-xl text-center max-w-md mx-auto relative overflow-hidden mb-8">
+      <div className="bg-white border-4 border-[#7A1C1C] rounded-3xl p-6 sm:p-8 shadow-xl text-center max-w-md mx-auto relative overflow-hidden mb-8 text-neutral-900">
         {/* Gold Border Accent */}
         <div className="absolute inset-1.5 border-2 border-dashed border-[#C5A059] rounded-2xl pointer-events-none" />
 
         <div className="relative z-10 flex justify-center mb-3">
-          <BMBLogo size="lg" />
+          <BMBLogo size="lg" forceLight={true} />
         </div>
 
         <div className="relative z-10 mb-2">

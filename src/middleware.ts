@@ -1,17 +1,19 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { verifyAdminToken } from '@/lib/adminAuth';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const authCookie = request.cookies.get('bmb_admin_auth');
-  const isAuthenticated = Boolean(authCookie?.value && authCookie.value.trim().length > 0);
+  const sessionCheck = await verifyAdminToken(authCookie?.value);
+  const isAuthenticated = sessionCheck.valid;
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-admin-pathname', pathname);
 
   // 1. Admin login page and auth API
   if (pathname === '/admin/login' || pathname === '/api/admin/auth') {
-    // If already logged in and visiting login page, redirect to admin overview
+    // If already logged in with valid token and visiting login page, redirect to admin overview
     if (pathname === '/admin/login' && isAuthenticated) {
       return NextResponse.redirect(new URL('/admin', request.url));
     }
@@ -25,7 +27,11 @@ export function middleware(request: NextRequest) {
     if (!isAuthenticated) {
       const loginUrl = new URL('/admin/login', request.url);
       loginUrl.searchParams.set('callbackUrl', pathname);
-      return NextResponse.redirect(loginUrl);
+      const response = NextResponse.redirect(loginUrl);
+      if (authCookie?.value && !isAuthenticated) {
+        response.cookies.delete('bmb_admin_auth');
+      }
+      return response;
     }
   }
 
@@ -33,7 +39,7 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith('/api/admin')) {
     if (!isAuthenticated) {
       return NextResponse.json(
-        { error: 'Unauthorized: Administrator session required' },
+        { error: 'Unauthorized: Invalid or expired administrator session' },
         { status: 401 }
       );
     }
@@ -47,3 +53,4 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: ['/admin/:path*', '/api/admin/:path*'],
 };
+

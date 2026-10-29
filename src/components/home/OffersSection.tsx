@@ -60,7 +60,7 @@ export default function OffersSection() {
             key={offer.code}
             className={`p-4 rounded-2xl border transition-all flex flex-col justify-between ${
               offer.highlight
-                ? 'bg-gradient-to-br from-[#8c1824]/5 via-amber-500/5 to-white border-[#8c1824]/30 shadow-sm'
+                ? 'bg-gradient-to-br from-[#8c1824]/10 via-amber-500/5 to-surface dark:from-[#8c1824]/25 dark:via-amber-500/10 dark:to-surface border-[#8c1824]/30 shadow-sm'
                 : 'bg-surface border-border shadow-sm'
             }`}
           >
@@ -69,7 +69,7 @@ export default function OffersSection() {
                 <span className="font-extrabold text-lg text-primary flex items-center gap-1">
                   <Percent className="w-4 h-4" /> {offer.discount}
                 </span>
-                <span className="text-[11px] font-semibold text-foreground/50 bg-border/40 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] font-semibold text-foreground/60 bg-border/40 px-2 py-0.5 rounded-full">
                   {offer.minOrder}
                 </span>
               </div>
@@ -79,7 +79,7 @@ export default function OffersSection() {
             </div>
 
             <div className="flex items-center justify-between pt-3 border-t border-border/50">
-              <span className="font-mono text-xs font-bold bg-[#8c1824]/10 text-[#8c1824] px-2.5 py-1 rounded-md border border-dashed border-[#8c1824]/30">
+              <span className="font-mono text-xs font-bold bg-[#8c1824]/10 dark:bg-[#8c1824]/30 text-[#8c1824] dark:text-[#fca5a5] px-2.5 py-1 rounded-md border border-dashed border-[#8c1824]/30 dark:border-[#8c1824]/50">
                 {offer.code}
               </span>
               <button

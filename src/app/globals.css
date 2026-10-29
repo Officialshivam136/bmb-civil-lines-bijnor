@@ -1,14 +1,33 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #fffcf8; /* Cream/ivory background */
-  --foreground: #3e2723; /* Dark brown text */
+  --foreground: #2d1810; /* Deep rich brown text */
   --primary: #800000; /* Deep red / maroon */
   --primary-foreground: #ffffff;
-  --accent: #ff9933; /* Saffron/gold accents */
+  --accent: #d97706; /* Saffron/gold accents */
   --accent-foreground: #ffffff;
   --surface: #ffffff;
-  --border: #e6dfd5;
+  --surface-hover: #faf6f0;
+  --border: #e8ded4;
+  --muted: #78655f;
+  color-scheme: light;
+}
+
+.dark {
+  --background: #120f12; /* Deep warm royal obsidian velvet */
+  --foreground: #faf4ed; /* Soft warm ivory cream text */
+  --primary: #d92d3a; /* Radiant imperial ruby crimson with high contrast */
+  --primary-foreground: #ffffff;
+  --accent: #f59e0b; /* Saffron warm amber/gold */
+  --accent-foreground: #120f12;
+  --surface: #1c171a; /* Elevated dark card surface */
+  --surface-hover: #261f23;
+  --border: #382c32; /* Subtle warm border */
+  --muted: #b5a29e;
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -19,7 +38,9 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
   --color-border: var(--border);
+  --color-muted: var(--muted);
   --font-sans: var(--font-inter);
 }
 
@@ -28,6 +49,21 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Ensure smooth dark mode contrast on native form inputs */
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark textarea,
+.dark select {
+  background-color: var(--surface);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #8c7b82;
 }
 
 /* ========================================================
@@ -184,4 +220,14 @@ body {
   border-color: #d6cdc0 !important;
   color: #1c1917 !important;
 }
+
+@media print {
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
 

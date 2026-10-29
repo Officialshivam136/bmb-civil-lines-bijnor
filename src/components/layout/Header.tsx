@@ -7,6 +7,7 @@ import { useCart } from '@/context/CartContext';
 import { useState, useEffect } from 'react';
 import BMBLogo from '@/components/common/BMBLogo';
 import SearchBar from '@/components/common/SearchBar';
+import ThemeToggle from '@/components/layout/ThemeToggle';
 
 export default function Header() {
   const pathname = usePathname();
@@ -38,8 +39,11 @@ export default function Header() {
           <SearchBar />
         </div>
 
-        {/* Quick Actions (Cart & Account & Mobile Search toggle) */}
-        <div className="flex items-center gap-3 sm:gap-4 md:gap-6 shrink-0">
+        {/* Quick Actions (Theme Toggle, Contact QR, Account, Cart & Mobile Search toggle) */}
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-5 shrink-0">
+          {/* Theme Configuration Toggle */}
+          <ThemeToggle />
+
           <button
             onClick={() => setShowMobileSearch(!showMobileSearch)}
             className="md:hidden p-2 text-foreground/80 hover:text-primary transition-colors"

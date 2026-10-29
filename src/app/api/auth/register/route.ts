@@ -7,12 +7,21 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { name, phone, password } = body;
 
-    if (!name || !phone || !password) {
-      return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+    if (!name?.trim() || !phone?.trim() || !password) {
+      return NextResponse.json({ error: 'Name, phone number, and password are required' }, { status: 400 });
+    }
+
+    const cleanPhone = phone.replace(/\D/g, '').slice(-10);
+    if (cleanPhone.length !== 10) {
+      return NextResponse.json({ error: 'Please enter a valid 10-digit Indian phone number' }, { status: 400 });
+    }
+
+    if (typeof password !== 'string' || password.length < 6) {
+      return NextResponse.json({ error: 'Password must be at least 6 characters long' }, { status: 400 });
     }
 
     const existingUser = await prisma.user.findUnique({
-      where: { phone }
+      where: { phone: cleanPhone }
     });
 
     if (existingUser) {
@@ -23,8 +32,8 @@ export async function POST(request: Request) {
 
     const user = await prisma.user.create({
       data: {
-        name,
-        phone,
+        name: name.trim().slice(0, 100),
+        phone: cleanPhone,
         password: hashedPassword,
         isGuest: false
       }

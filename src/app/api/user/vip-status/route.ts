@@ -49,13 +49,16 @@ export async function GET(request: Request) {
     // VIP rule: Must have ordered at least twice in a month (>= 2 orders within last 30 days)
     const isVip = monthlyOrderCount >= 2;
 
+    // For authenticated users, provide their recent orders; for unauthenticated queries by phone, omit sensitive order details to prevent PII leakage
+    const isAuthenticatedOwner = Boolean(userId && (!cleanPhone || cleanPhone === (session?.user as any)?.phone));
+
     return NextResponse.json({
       isVip,
       monthlyOrderCount,
       threshold: 2,
       discountPercent: isVip ? 10 : 0,
       statusLabel: isVip ? 'VIP Patron' : 'Normal User',
-      recentOrders: monthlyOrders,
+      ...(isAuthenticatedOwner ? { recentOrders: monthlyOrders } : {}),
       message: isVip
         ? `👑 BMB VIP Patron Confirmed! You have ordered ${monthlyOrderCount} times in the past month. Flat 10% VIP discount automatically applied on your orders.`
         : monthlyOrderCount === 1

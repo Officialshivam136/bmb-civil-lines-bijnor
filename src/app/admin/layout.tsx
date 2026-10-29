@@ -2,6 +2,7 @@ import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import AdminLayoutShell from '@/components/admin/layout/AdminLayoutShell';
+import { verifyAdminToken } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,17 +11,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const currentPath = headerList.get('x-admin-pathname') || '';
   const isLoginPage = currentPath === '/admin/login';
 
-  const cookieStore = await cookies();
-  const authCookie = cookieStore.get('bmb_admin_auth');
-  const isAuthenticated = Boolean(authCookie?.value && authCookie.value.trim().length > 0);
-
   // If on /admin/login, render auth form directly without admin layout
   if (isLoginPage) {
     return <>{children}</>;
   }
 
-  // Hard server-side protection: redirect unauthenticated users to /admin/login
-  if (!isAuthenticated) {
+  const cookieStore = await cookies();
+  const authCookie = cookieStore.get('bmb_admin_auth');
+  const sessionCheck = await verifyAdminToken(authCookie?.value);
+
+  // Hard server-side protection: redirect unauthenticated or forged sessions to /admin/login
+  if (!sessionCheck.valid || !sessionCheck.adminId) {
     redirect('/admin/login');
   }
 
@@ -29,9 +30,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   let adminEmail = 'admin@bmb.com';
 
   try {
-    if (authCookie?.value && !authCookie.value.startsWith('admin_bmb_')) {
+    const adminId = sessionCheck.adminId;
+    if (adminId && !adminId.startsWith('admin_bmb_')) {
       const admin = await prisma.adminUser.findUnique({
-        where: { id: authCookie.value },
+        where: { id: adminId },
         select: { name: true, email: true }
       });
       if (admin) {
@@ -49,3 +51,4 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     </AdminLayoutShell>
   );
 }
+

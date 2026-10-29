@@ -187,7 +187,7 @@ export default function AdminQRStandsPage() {
 
           {/* Shop Crest Logo */}
           <div className="relative z-10 flex justify-center mb-3">
-            <BMBLogo size="lg" />
+            <BMBLogo size="lg" forceLight={true} />
           </div>
 
           <div className="relative z-10 mb-2">

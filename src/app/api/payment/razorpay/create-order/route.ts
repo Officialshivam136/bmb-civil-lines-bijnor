@@ -1,17 +1,37 @@
 import { NextResponse } from 'next/server';
 import { getRazorpayClient, razorpayKeyId } from '@/lib/razorpay';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { amount, orderNumber, receipt } = body;
+    const { amount, orderNumber, orderId, receipt } = body;
 
-    if (!amount || amount <= 0) {
-      return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
+    let targetAmount = Number(amount);
+
+    // If orderId or orderNumber is supplied, enforce server-side price from database
+    if (orderId || orderNumber) {
+      const dbOrder = await prisma.order.findFirst({
+        where: {
+          OR: [
+            ...(orderId ? [{ id: orderId }] : []),
+            ...(orderNumber ? [{ orderNumber }] : [])
+          ]
+        },
+        select: { total: true }
+      });
+      if (dbOrder && typeof dbOrder.total === 'number') {
+        targetAmount = dbOrder.total;
+      }
     }
 
-    const amountInPaise = Math.round(Number(amount) * 100);
+    if (!targetAmount || targetAmount <= 0) {
+      return NextResponse.json({ error: 'Invalid order payable amount' }, { status: 400 });
+    }
+
+    const amountInPaise = Math.round(targetAmount * 100);
     const razorpay = getRazorpayClient();
+
 
     let razorpayOrder;
 

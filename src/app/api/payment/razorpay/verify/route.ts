@@ -9,26 +9,52 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature } = body;
 
-    if (!orderId || !razorpay_payment_id) {
-      return NextResponse.json({ error: 'Missing payment details' }, { status: 400 });
+    if (!orderId || !razorpay_payment_id || !razorpay_order_id) {
+      return NextResponse.json({ error: 'Missing mandatory payment details' }, { status: 400 });
     }
 
-    // In demo mode or when signature is present, verify signature
-    let isSignatureValid = true;
+    // Verify order exists in database
+    const existingOrder = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { payment: true }
+    });
 
-    if (razorpay_signature && razorpay_order_id && razorpayKeySecret !== 'bmb_secret_test_key_2026') {
+    if (!existingOrder) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+
+    if (existingOrder.status === 'CONFIRMED' && existingOrder.payment?.status === 'SUCCESS') {
+      return NextResponse.json({
+        success: true,
+        message: 'Order has already been confirmed and paid.',
+        transactionId: existingOrder.payment?.transactionId
+      });
+    }
+
+    // Enforce Cryptographic HMAC-SHA256 signature verification
+    const isLiveRazorpay = razorpayKeySecret && razorpayKeySecret !== 'bmb_secret_test_key_2026';
+
+    if (isLiveRazorpay) {
+      if (!razorpay_signature) {
+        return NextResponse.json({ error: 'Missing payment signature' }, { status: 400 });
+      }
+
       const generatedSignature = crypto
         .createHmac('sha256', razorpayKeySecret)
         .update(`${razorpay_order_id}|${razorpay_payment_id}`)
         .digest('hex');
 
-      if (generatedSignature !== razorpay_signature) {
-        isSignatureValid = false;
-      }
-    }
+      const expectedBuffer = Buffer.from(generatedSignature, 'utf-8');
+      const receivedBuffer = Buffer.from(razorpay_signature, 'utf-8');
 
-    if (!isSignatureValid) {
-      return NextResponse.json({ error: 'Invalid payment signature' }, { status: 400 });
+      if (expectedBuffer.length !== receivedBuffer.length || !crypto.timingSafeEqual(expectedBuffer, receivedBuffer)) {
+        return NextResponse.json({ error: 'Invalid cryptographic payment signature' }, { status: 400 });
+      }
+    } else {
+      // Dev / Test Sandbox validation: ensure non-empty valid mock tokens
+      if (!razorpay_payment_id.startsWith('pay_') || !razorpay_order_id.startsWith('order_')) {
+        return NextResponse.json({ error: 'Invalid test transaction identifiers' }, { status: 400 });
+      }
     }
 
     // Update database records
@@ -48,6 +74,7 @@ export async function POST(request: Request) {
         }
       })
     ]);
+
 
     // Send instant WhatsApp notification to shop owner with PAID status
     try {
